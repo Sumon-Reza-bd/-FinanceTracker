@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -35,40 +35,21 @@ import {
   Briefcase,
   ReceiptText,
   Sun,
-  Moon
+  Moon,
+  Loader2,
+  Cloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Transaction, TransactionType, CATEGORIES, MONTHS, YEARS, DPSAccount, DPSDeposit, IncrementHistory, LeaveApplication, LeaveType, LeaveStatus, BillEntry, BillType } from './types';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 
 export default function App() {
   // View State
   const [currentView, setCurrentView] = useState<'financial' | 'dps' | 'salary' | 'leave' | 'bills'>('financial');
+  const [isLoading, setIsLoading] = useState(true);
 
   // State
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('transactions');
-    if (saved) return JSON.parse(saved);
-    
-    // Initial sample data to match screenshot
-    return [
-      {
-        id: '1',
-        type: 'expense',
-        category: 'Rent',
-        amount: 3500,
-        date: '2026-04-12',
-        description: 'Rent'
-      },
-      {
-        id: '2',
-        type: 'expense',
-        category: 'Food',
-        amount: 2500,
-        date: '2026-04-11',
-        description: 'Food'
-      }
-    ];
-  });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const [type, setType] = useState<TransactionType>('expense');
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -95,6 +76,77 @@ export default function App() {
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
 
+  // Database Sync
+  const fetchData = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const [
+        { data: transData },
+        { data: acctsData },
+        { data: depsData },
+        { data: incData },
+        { data: leaveData },
+        { data: billData },
+        { data: settingsData }
+      ] = await Promise.all([
+        supabase.from('transactions').select('*').order('date', { ascending: false }),
+        supabase.from('dps_accounts').select('*').order('created_at', { ascending: true }),
+        supabase.from('dps_deposits').select('*').order('date', { ascending: false }),
+        supabase.from('increment_history').select('*').order('year', { ascending: false }),
+        supabase.from('leaves').select('*').order('applied_date', { ascending: false }),
+        supabase.from('bills').select('*').order('date', { ascending: false }),
+        supabase.from('app_settings').select('*')
+      ]);
+
+      if (transData) setTransactions(transData);
+      if (acctsData) setDpsAccounts(acctsData);
+      if (depsData) setDpsDeposits(depsData);
+      if (incData) setIncrementHistory(incData);
+      if (leaveData) setLeaves(leaveData);
+      if (billData) setBills(billData);
+      
+      if (settingsData) {
+        settingsData.forEach(setting => {
+          switch(setting.key) {
+            case 'grossSalary': setGrossSalary(setting.value); break;
+            case 'baseDeduction': setBaseDeduction(setting.value); break;
+            case 'medical': setMedical(setting.value); break;
+            case 'conveyance': setConveyance(setting.value); break;
+            case 'food': setFood(setting.value); break;
+            case 'attendanceBonus': setAttendanceBonus(setting.value); break;
+            case 'days': setDays(setting.value); break;
+            case 'rate': setRate(setting.value); break;
+            case 'casualLimit': setCasualLimit(setting.value); break;
+            case 'medicalLimit': setMedicalLimit(setting.value); break;
+            case 'annualLimit': setAnnualLimit(setting.value); break;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      showNotification('Failed to load data from database', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const saveSetting = async (key: string, value: string) => {
+    if (!isSupabaseConfigured) return;
+    try {
+      await supabase.from('app_settings').upsert({ key, value, updated_at: new Date().toISOString() });
+    } catch (error) {
+      console.error(`Error saving setting ${key}:`, error);
+    }
+  };
+
   // Theme Effect
   useEffect(() => {
     if (isDarkMode) {
@@ -106,24 +158,9 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Welcome Effect
-  useEffect(() => {
-    // Show welcome popup with a slight delay
-    const timer = setTimeout(() => {
-      setShowWelcome(true);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
-
   // DPS State
-  const [dpsAccounts, setDpsAccounts] = useState<DPSAccount[]>(() => {
-    const saved = localStorage.getItem('dpsAccounts');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [dpsDeposits, setDpsDeposits] = useState<DPSDeposit[]>(() => {
-    const saved = localStorage.getItem('dpsDeposits');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [dpsAccounts, setDpsAccounts] = useState<DPSAccount[]>([]);
+  const [dpsDeposits, setDpsDeposits] = useState<DPSDeposit[]>([]);
 
   // DPS Form State
   const [dpsBankName, setDpsBankName] = useState('');
@@ -141,28 +178,22 @@ export default function App() {
   const [salaryFormType, setSalaryFormType] = useState<'payslip' | 'increment'>('payslip');
 
   // Salary Info State
-  const [grossSalary, setGrossSalary] = useState(() => localStorage.getItem('grossSalary') || '');
-  const [baseDeduction, setBaseDeduction] = useState(() => localStorage.getItem('baseDeduction') || '');
-  const [medical, setMedical] = useState(() => localStorage.getItem('medical') || '');
-  const [conveyance, setConveyance] = useState(() => localStorage.getItem('conveyance') || '');
-  const [food, setFood] = useState(() => localStorage.getItem('food') || '');
-  const [attendanceBonus, setAttendanceBonus] = useState(() => localStorage.getItem('attendanceBonus') || '');
-  const [days, setDays] = useState(() => localStorage.getItem('days') || '');
-  const [rate, setRate] = useState(() => localStorage.getItem('rate') || '');
+  const [grossSalary, setGrossSalary] = useState('');
+  const [baseDeduction, setBaseDeduction] = useState('');
+  const [medical, setMedical] = useState('');
+  const [conveyance, setConveyance] = useState('');
+  const [food, setFood] = useState('');
+  const [attendanceBonus, setAttendanceBonus] = useState('');
+  const [days, setDays] = useState('');
+  const [rate, setRate] = useState('');
 
   // Increment State
   const [effectiveYear, setEffectiveYear] = useState(new Date().getFullYear().toString());
   const [percentIncrease, setPercentIncrease] = useState('');
-  const [incrementHistory, setIncrementHistory] = useState<IncrementHistory[]>(() => {
-    const saved = localStorage.getItem('incrementHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [incrementHistory, setIncrementHistory] = useState<IncrementHistory[]>([]);
 
   // Leave Info State
-  const [leaves, setLeaves] = useState<LeaveApplication[]>(() => {
-    const saved = localStorage.getItem('leaves');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [leaves, setLeaves] = useState<LeaveApplication[]>([]);
 
   // Leave Form State
   const [leaveType, setLeaveType] = useState<LeaveType>('Casual Leave');
@@ -174,15 +205,12 @@ export default function App() {
   const [leaveFilterYear, setLeaveFilterYear] = useState(new Date().getFullYear().toString());
 
   // Leave limits
-  const [casualLimit, setCasualLimit] = useState(() => localStorage.getItem('casualLimit') || '15');
-  const [medicalLimit, setMedicalLimit] = useState(() => localStorage.getItem('medicalLimit') || '15');
-  const [annualLimit, setAnnualLimit] = useState(() => localStorage.getItem('annualLimit') || '20');
+  const [casualLimit, setCasualLimit] = useState('15');
+  const [medicalLimit, setMedicalLimit] = useState('15');
+  const [annualLimit, setAnnualLimit] = useState('20');
 
   // Bill Info State
-  const [bills, setBills] = useState<BillEntry[]>(() => {
-    const saved = localStorage.getItem('bills');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [bills, setBills] = useState<BillEntry[]>([]);
   const [billType, setBillType] = useState<BillType>('Electric');
   const [billAmount, setBillAmount] = useState('');
   const [billMonth, setBillMonth] = useState(MONTHS[new Date().getMonth()]);
@@ -192,12 +220,12 @@ export default function App() {
   const [editingBillId, setEditingBillId] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('leaves', JSON.stringify(leaves));
-  }, [leaves]);
-
-  useEffect(() => {
-    localStorage.setItem('bills', JSON.stringify(bills));
-  }, [bills]);
+    // Show welcome popup with a slight delay
+    const timer = setTimeout(() => {
+      setShowWelcome(true);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const availableLeaveYears = useMemo(() => {
     const years = new Set<string>();
@@ -263,9 +291,6 @@ export default function App() {
     return Array.from(years).sort((a, b) => b.localeCompare(a));
   }, [bills]);
 
-  useEffect(() => {
-    localStorage.setItem('incrementHistory', JSON.stringify(incrementHistory));
-  }, [incrementHistory]);
 
   const salaryCalculations = useMemo(() => {
     const gross = Number(grossSalary) || 0;
@@ -340,44 +365,87 @@ export default function App() {
       .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [leaves, leaveFilterYear]);
 
-  const handleSavePaySlip = () => {
-    localStorage.setItem('grossSalary', grossSalary);
-    localStorage.setItem('baseDeduction', baseDeduction);
-    localStorage.setItem('medical', medical);
-    localStorage.setItem('conveyance', conveyance);
-    localStorage.setItem('food', food);
-    localStorage.setItem('attendanceBonus', attendanceBonus);
-    localStorage.setItem('days', days);
-    localStorage.setItem('rate', rate);
-    showNotification('Pay Slip saved successfully');
+  const handleSavePaySlip = async () => {
+    try {
+      await Promise.all([
+        saveSetting('grossSalary', grossSalary),
+        saveSetting('baseDeduction', baseDeduction),
+        saveSetting('medical', medical),
+        saveSetting('conveyance', conveyance),
+        saveSetting('food', food),
+        saveSetting('attendanceBonus', attendanceBonus),
+        saveSetting('days', days),
+        saveSetting('rate', rate)
+      ]);
+      showNotification('Pay Slip saved successfully');
+    } catch (error) {
+      console.error('Error saving pay slip:', error);
+      showNotification('Failed to save pay slip', 'error');
+    }
   };
 
-  const handleSaveIncrement = () => {
+  const handleSaveIncrement = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!percentIncrease) {
       showNotification('Please enter percentage increase', 'error');
       return;
     }
 
-    const newIncrement: IncrementHistory = {
-      id: editingIncrementId || crypto.randomUUID(),
+    const incrementData = {
       year: effectiveYear,
-      percentIncrease: Number(percentIncrease),
-      amountPlus: incrementCalculations.amountPlus,
-      grossTotal: incrementCalculations.grossTotal
+      percent_increase: Number(percentIncrease),
+      amount_plus: incrementCalculations.amountPlus,
+      gross_total: incrementCalculations.grossTotal
     };
 
-    if (editingIncrementId) {
-      setIncrementHistory(prev => prev.map(inc => inc.id === editingIncrementId ? newIncrement : inc));
-      setEditingIncrementId(null);
-      showNotification('Increment updated successfully');
-    } else {
-      setIncrementHistory([newIncrement, ...incrementHistory]);
-      setGrossSalary(incrementCalculations.grossTotal.toString());
-      showNotification('Increment saved successfully');
-    }
+    try {
+      if (editingIncrementId) {
+        const { error } = await supabase
+          .from('increment_history')
+          .update(incrementData)
+          .eq('id', editingIncrementId);
+        
+        if (error) throw error;
+        setIncrementHistory(prev => prev.map(inc => inc.id === editingIncrementId ? { 
+          ...inc, 
+          year: effectiveYear,
+          percentIncrease: Number(percentIncrease),
+          amountPlus: incrementCalculations.amountPlus,
+          grossTotal: incrementCalculations.grossTotal
+        } : inc));
+        setEditingIncrementId(null);
+        showNotification('Increment updated successfully');
+      } else {
+        const { data, error } = await supabase
+          .from('increment_history')
+          .insert([incrementData])
+          .select();
+        
+        if (error) throw error;
+        if (data) {
+          const newIncrement: IncrementHistory = {
+            id: data[0].id,
+            year: data[0].year,
+            percentIncrease: Number(data[0].percent_increase),
+            amountPlus: Number(data[0].amount_plus),
+            grossTotal: Number(data[0].gross_total)
+          };
+          setIncrementHistory([newIncrement, ...incrementHistory]);
+          setGrossSalary(incrementCalculations.grossTotal.toString());
+          await saveSetting('grossSalary', incrementCalculations.grossTotal.toString());
+        }
+        showNotification('Increment saved successfully');
+      }
 
-    // Reset
-    setPercentIncrease('');
+      // Reset
+      setPercentIncrease('');
+    } catch (error) {
+      console.error('Error saving increment:', error);
+      showNotification('Failed to save increment', 'error');
+    }
   };
 
   const handleEditIncrement = (inc: IncrementHistory) => {
@@ -415,17 +483,6 @@ export default function App() {
   };
 
   // Persistence
-  useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [transactions]);
-
-  useEffect(() => {
-    localStorage.setItem('dpsAccounts', JSON.stringify(dpsAccounts));
-  }, [dpsAccounts]);
-
-  useEffect(() => {
-    localStorage.setItem('dpsDeposits', JSON.stringify(dpsDeposits));
-  }, [dpsDeposits]);
 
   // Calculations
   const filteredTransactions = useMemo(() => {
@@ -512,11 +569,14 @@ export default function App() {
   };
 
   // Handlers
-  const handleAddTransaction = () => {
+  const handleAddTransaction = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!amount || isNaN(Number(amount))) return;
 
-    const newTransaction: Transaction = {
-      id: editingId || crypto.randomUUID(),
+    const transactionData = {
       type,
       category,
       amount: Number(amount),
@@ -524,18 +584,35 @@ export default function App() {
       description
     };
 
-    if (editingId) {
-      setTransactions(prev => prev.map(t => t.id === editingId ? newTransaction : t));
-      setEditingId(null);
-      showNotification('Transaction updated successfully!');
-    } else {
-      setTransactions(prev => [newTransaction, ...prev]);
-      showNotification('Transaction added successfully!');
-    }
+    try {
+      if (editingId) {
+        const { error } = await supabase
+          .from('transactions')
+          .update(transactionData)
+          .eq('id', editingId);
+        
+        if (error) throw error;
+        setTransactions(prev => prev.map(t => t.id === editingId ? { ...t, ...transactionData } : t));
+        setEditingId(null);
+        showNotification('Transaction updated successfully!');
+      } else {
+        const { data, error } = await supabase
+          .from('transactions')
+          .insert([transactionData])
+          .select();
+        
+        if (error) throw error;
+        if (data) setTransactions(prev => [data[0], ...prev]);
+        showNotification('Transaction added successfully!');
+      }
 
-    // Reset form
-    setAmount('');
-    setDescription('');
+      // Reset form
+      setAmount('');
+      setDescription('');
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      showNotification('Failed to save transaction', 'error');
+    }
   };
 
   const handleEdit = (t: Transaction) => {
@@ -553,97 +630,202 @@ export default function App() {
     setDeleteConfirm({ id, type });
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!deleteConfirm) return;
 
-    if (deleteConfirm.type === 'financial') {
-      setTransactions(prev => prev.filter(t => t.id !== deleteConfirm.id));
-      showNotification('Transaction deleted successfully!', 'error');
-    } else if (deleteConfirm.type === 'dps-deposit') {
-      setDpsDeposits(prev => prev.filter(d => d.id !== deleteConfirm.id));
-      showNotification('DPS Deposit deleted successfully!', 'error');
-    } else if (deleteConfirm.type === 'dps-account') {
-      setDpsAccounts(prev => prev.filter(a => a.id !== deleteConfirm.id));
-      // Also delete associated deposits
-      setDpsDeposits(prev => prev.filter(d => d.accountId !== deleteConfirm.id));
-      showNotification('DPS Account and associated deposits deleted!', 'error');
-    } else if (deleteConfirm.type === 'salary-increment') {
-      setIncrementHistory(prev => prev.filter(inc => inc.id !== deleteConfirm.id));
-      showNotification('Increment deleted successfully!', 'error');
-    } else if (deleteConfirm.type === 'leave-application') {
-      setLeaves(prev => prev.filter(l => l.id !== deleteConfirm.id));
-      showNotification('Leave application deleted!', 'error');
-    } else if (deleteConfirm.type === 'bill-entry') {
-      setBills(prev => prev.filter(b => b.id !== deleteConfirm.id));
-      showNotification('Bill record deleted!', 'error');
+    try {
+      let table = '';
+      switch(deleteConfirm.type) {
+        case 'financial': table = 'transactions'; break;
+        case 'dps-deposit': table = 'dps_deposits'; break;
+        case 'dps-account': table = 'dps_accounts'; break;
+        case 'salary-increment': table = 'increment_history'; break;
+        case 'leave-application': table = 'leaves'; break;
+        case 'bill-entry': table = 'bills'; break;
+      }
+
+      if (table) {
+        const { error } = await supabase.from(table).delete().eq('id', deleteConfirm.id);
+        if (error) throw error;
+      }
+
+      if (deleteConfirm.type === 'financial') {
+        setTransactions(prev => prev.filter(t => t.id !== deleteConfirm.id));
+        showNotification('Transaction deleted successfully!', 'error');
+      } else if (deleteConfirm.type === 'dps-deposit') {
+        setDpsDeposits(prev => prev.filter(d => d.id !== deleteConfirm.id));
+        showNotification('DPS Deposit deleted successfully!', 'error');
+      } else if (deleteConfirm.type === 'dps-account') {
+        setDpsAccounts(prev => prev.filter(a => a.id !== deleteConfirm.id));
+        setDpsDeposits(prev => prev.filter(d => d.accountId !== deleteConfirm.id));
+        showNotification('DPS Account and associated deposits deleted!', 'error');
+      } else if (deleteConfirm.type === 'salary-increment') {
+        setIncrementHistory(prev => prev.filter(inc => inc.id !== deleteConfirm.id));
+        showNotification('Increment deleted successfully!', 'error');
+      } else if (deleteConfirm.type === 'leave-application') {
+        setLeaves(prev => prev.filter(l => l.id !== deleteConfirm.id));
+        showNotification('Leave application deleted!', 'error');
+      } else if (deleteConfirm.type === 'bill-entry') {
+        setBills(prev => prev.filter(b => b.id !== deleteConfirm.id));
+        showNotification('Bill record deleted!', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      showNotification('Failed to delete record', 'error');
     }
 
     setDeleteConfirm(null);
   };
 
   // Leave Handlers
-  const handleApplyLeave = () => {
+  const handleApplyLeave = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!leaveReason) {
       showNotification('Please provide a reason', 'error');
       return;
     }
 
-    const newLeave: LeaveApplication = {
-      id: editingLeaveId || crypto.randomUUID(),
+    const leaveData = {
       type: leaveType,
       status: leaveStatus,
-      startDate: leaveStartDate,
-      endDate: leaveEndDate,
+      start_date: leaveStartDate,
+      end_date: leaveEndDate,
       reason: leaveReason,
-      appliedDate: new Date().toISOString()
+      applied_date: new Date().toISOString()
     };
 
-    if (editingLeaveId) {
-      setLeaves(prev => prev.map(l => l.id === editingLeaveId ? newLeave : l));
-      setEditingLeaveId(null);
-      showNotification('Leave application updated successfully');
-    } else {
-      setLeaves(prev => [newLeave, ...prev]);
-      showNotification('Leave application submitted successfully');
-    }
+    try {
+      if (editingLeaveId) {
+        const { error } = await supabase
+          .from('leaves')
+          .update(leaveData)
+          .eq('id', editingLeaveId);
+        
+        if (error) throw error;
+        setLeaves(prev => prev.map(l => l.id === editingLeaveId ? { 
+          ...l, 
+          type: leaveType,
+          status: leaveStatus,
+          startDate: leaveStartDate,
+          endDate: leaveEndDate,
+          reason: leaveReason
+        } : l));
+        setEditingLeaveId(null);
+        showNotification('Leave application updated successfully');
+      } else {
+        const { data, error } = await supabase
+          .from('leaves')
+          .insert([leaveData])
+          .select();
+        
+        if (error) throw error;
+        if (data) {
+          const newLeave: LeaveApplication = {
+            id: data[0].id,
+            type: data[0].type,
+            status: data[0].status,
+            startDate: data[0].start_date,
+            endDate: data[0].end_date,
+            reason: data[0].reason,
+            appliedDate: data[0].applied_date
+          };
+          setLeaves(prev => [newLeave, ...prev]);
+        }
+        showNotification('Leave application submitted successfully');
+      }
 
-    setLeaveReason('');
+      setLeaveReason('');
+    } catch (error) {
+      console.error('Error saving leave:', error);
+      showNotification('Failed to save leave application', 'error');
+    }
   };
 
-  const handleSaveLeaveLimits = () => {
-    localStorage.setItem('casualLimit', casualLimit);
-    localStorage.setItem('medicalLimit', medicalLimit);
-    localStorage.setItem('annualLimit', annualLimit);
-    showNotification('Leave limits saved successfully');
+  const handleSaveLeaveLimits = async () => {
+    try {
+      await Promise.all([
+        saveSetting('casualLimit', casualLimit),
+        saveSetting('medicalLimit', medicalLimit),
+        saveSetting('annualLimit', annualLimit)
+      ]);
+      showNotification('Leave limits saved successfully');
+    } catch (error) {
+      console.error('Error saving leave limits:', error);
+      showNotification('Failed to save limits', 'error');
+    }
   };
 
   // Bill Handlers
-  const handleApplyBill = () => {
+  const handleApplyBill = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!billAmount) {
       showNotification('Please enter the bill amount', 'error');
       return;
     }
 
-    const newBill: BillEntry = {
-      id: editingBillId || Math.random().toString(36).substring(2, 9),
+    const billData = {
       type: billFormType,
       amount: Number(billAmount),
       month: billMonth,
       year: billYear,
       date: new Date().toISOString().split('T')[0],
-      appliedDate: new Date().toISOString()
+      applied_date: new Date().toISOString()
     };
 
-    if (editingBillId) {
-      setBills(prev => prev.map(b => b.id === editingBillId ? newBill : b));
-      setEditingBillId(null);
-      showNotification('Bill information updated successfully');
-    } else {
-      setBills(prev => [newBill, ...prev]);
-      showNotification('Bill information saved successfully');
-    }
+    try {
+      if (editingBillId) {
+        const { error } = await supabase
+          .from('bills')
+          .update(billData)
+          .eq('id', editingBillId);
+        
+        if (error) throw error;
+        setBills(prev => prev.map(b => b.id === editingBillId ? { 
+          ...b, 
+          type: billFormType,
+          amount: Number(billAmount),
+          month: billMonth,
+          year: billYear
+        } : b));
+        setEditingBillId(null);
+        showNotification('Bill information updated successfully');
+      } else {
+        const { data, error } = await supabase
+          .from('bills')
+          .insert([billData])
+          .select();
+        
+        if (error) throw error;
+        if (data) {
+          const newBill: BillEntry = {
+            id: data[0].id,
+            type: data[0].type,
+            amount: Number(data[0].amount),
+            month: data[0].month,
+            year: data[0].year,
+            date: data[0].date,
+            appliedDate: data[0].applied_date
+          };
+          setBills(prev => [newBill, ...prev]);
+        }
+        showNotification('Bill information saved successfully');
+      }
 
-    setBillAmount('');
+      setBillAmount('');
+    } catch (error) {
+      console.error('Error saving bill:', error);
+      showNotification('Failed to save bill info', 'error');
+    }
   };
 
   const handleEditBill = (bill: BillEntry) => {
@@ -666,7 +848,11 @@ export default function App() {
   };
 
   // DPS Handlers
-  const handleAddDPSAccount = () => {
+  const handleAddDPSAccount = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!dpsBankName || !dpsMonthlyDeposit || !dpsPeriodYears) return;
 
     const monthly = Number(dpsMonthlyDeposit);
@@ -678,31 +864,68 @@ export default function App() {
     const maturityDate = new Date(dpsStartDate);
     maturityDate.setFullYear(maturityDate.getFullYear() + years);
 
-    const newAccount: DPSAccount = {
-      id: editingDpsAccountId || crypto.randomUUID(),
-      bankName: dpsBankName,
-      monthlyDeposit: monthly,
-      periodYears: years,
-      profitPercentage: profit,
-      startDate: dpsStartDate,
-      targetTotal: maturityAmount,
-      maturityDate: maturityDate.toISOString().split('T')[0]
+    const accountData = {
+      bank_name: dpsBankName,
+      monthly_deposit: monthly,
+      period_years: years,
+      profit_percentage: profit,
+      start_date: dpsStartDate,
+      target_total: maturityAmount,
+      maturity_date: maturityDate.toISOString().split('T')[0]
     };
 
-    if (editingDpsAccountId) {
-      setDpsAccounts(prev => prev.map(a => a.id === editingDpsAccountId ? newAccount : a));
-      setEditingDpsAccountId(null);
-      showNotification('DPS Account updated successfully!');
-    } else {
-      setDpsAccounts(prev => [...prev, newAccount]);
-      showNotification('DPS Account created successfully!');
+    try {
+      if (editingDpsAccountId) {
+        const { error } = await supabase
+          .from('dps_accounts')
+          .update(accountData)
+          .eq('id', editingDpsAccountId);
+        
+        if (error) throw error;
+        setDpsAccounts(prev => prev.map(a => a.id === editingDpsAccountId ? { 
+          ...a, 
+          bankName: dpsBankName,
+          monthlyDeposit: monthly,
+          periodYears: years,
+          profitPercentage: profit,
+          startDate: dpsStartDate,
+          targetTotal: maturityAmount,
+          maturityDate: maturityDate.toISOString().split('T')[0]
+        } : a));
+        setEditingDpsAccountId(null);
+        showNotification('DPS Account updated successfully!');
+      } else {
+        const { data, error } = await supabase
+          .from('dps_accounts')
+          .insert([accountData])
+          .select();
+        
+        if (error) throw error;
+        if (data) {
+          const newAccount: DPSAccount = {
+            id: data[0].id,
+            bankName: data[0].bank_name,
+            monthlyDeposit: Number(data[0].monthly_deposit),
+            periodYears: Number(data[0].period_years),
+            profitPercentage: Number(data[0].profit_percentage),
+            startDate: data[0].start_date,
+            targetTotal: Number(data[0].target_total),
+            maturityDate: data[0].maturity_date
+          };
+          setDpsAccounts(prev => [...prev, newAccount]);
+        }
+        showNotification('DPS Account created successfully!');
+      }
+      
+      // Reset
+      setDpsBankName('');
+      setDpsMonthlyDeposit('');
+      setDpsPeriodYears('');
+      setDpsProfitPercentage('');
+    } catch (error) {
+      console.error('Error saving DPS account:', error);
+      showNotification('Failed to save DPS account', 'error');
     }
-    
-    // Reset
-    setDpsBankName('');
-    setDpsMonthlyDeposit('');
-    setDpsPeriodYears('');
-    setDpsProfitPercentage('');
   };
 
   const handleEditDPSAccount = (acc: DPSAccount) => {
@@ -716,29 +939,64 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleAddDPSDeposit = () => {
+  const handleAddDPSDeposit = async () => {
+    if (!isSupabaseConfigured) {
+      showNotification('Supabase not configured. Data is not being synced.', 'error');
+      return;
+    }
     if (!selectedDpsAccountId || !depositAmount) return;
 
-    const newDeposit: DPSDeposit = {
-      id: editingDpsDepositId || crypto.randomUUID(),
-      accountId: selectedDpsAccountId,
+    const depositData = {
+      account_id: selectedDpsAccountId,
       amount: Number(depositAmount),
       date: depositDate,
       description: depositNote
     };
 
-    if (editingDpsDepositId) {
-      setDpsDeposits(prev => prev.map(d => d.id === editingDpsDepositId ? newDeposit : d));
-      setEditingDpsDepositId(null);
-      showNotification('DPS Deposit updated successfully!');
-    } else {
-      setDpsDeposits(prev => [...prev, newDeposit]);
-      showNotification('DPS Deposit recorded successfully!');
+    try {
+      if (editingDpsDepositId) {
+        const { error } = await supabase
+          .from('dps_deposits')
+          .update(depositData)
+          .eq('id', editingDpsDepositId);
+        
+        if (error) throw error;
+        setDpsDeposits(prev => prev.map(d => d.id === editingDpsDepositId ? { 
+          ...d, 
+          accountId: selectedDpsAccountId,
+          amount: Number(depositAmount),
+          date: depositDate,
+          description: depositNote
+        } : d));
+        setEditingDpsDepositId(null);
+        showNotification('DPS Deposit updated successfully!');
+      } else {
+        const { data, error } = await supabase
+          .from('dps_deposits')
+          .insert([depositData])
+          .select();
+        
+        if (error) throw error;
+        if (data) {
+          const newDeposit: DPSDeposit = {
+            id: data[0].id,
+            accountId: data[0].account_id,
+            amount: Number(data[0].amount),
+            date: data[0].date,
+            description: data[0].description
+          };
+          setDpsDeposits(prev => [newDeposit, ...prev]);
+        }
+        showNotification('DPS Deposit recorded successfully!');
+      }
+      
+      // Reset
+      setDepositAmount('');
+      setDepositNote('');
+    } catch (error) {
+      console.error('Error saving deposit:', error);
+      showNotification('Failed to save deposit', 'error');
     }
-    
-    // Reset
-    setDepositAmount('');
-    setDepositNote('');
   };
 
   const handleEditDPSDeposit = (d: DPSDeposit) => {
@@ -795,6 +1053,49 @@ export default function App() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans`}>
+      {/* Loading Overlay */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+          >
+            <div className="relative">
+              {isSupabaseConfigured ? (
+                <>
+                  <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Wallet className="text-indigo-400" size={24} />
+                  </div>
+                </>
+              ) : (
+                <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center">
+                  <Cloud className="text-rose-400" size={32} />
+                </div>
+              )}
+            </div>
+            <h2 className="mt-6 text-xl font-bold text-white tracking-tight">
+              {isSupabaseConfigured ? 'Initializing Database' : 'Cloud Setup Required'}
+            </h2>
+            <p className="mt-2 text-slate-400 text-sm max-w-xs">
+              {isSupabaseConfigured 
+                ? 'Connecting to Supabase and fetching your financial records...' 
+                : 'Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in settings to sync your data.'}
+            </p>
+            {!isSupabaseConfigured && (
+              <button 
+                onClick={() => setIsLoading(false)}
+                className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all"
+              >
+                CONTINUE OFFLINE
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Notifications */}
       <AnimatePresence>
         {notification && (
@@ -880,6 +1181,15 @@ export default function App() {
 
         {/* Right Area: Theme Toggle & More */}
         <div className="flex items-center gap-3">
+          <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${
+            !isSupabaseConfigured 
+              ? (isDarkMode ? 'bg-rose-900/30 border-rose-800/50 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-600')
+              : (isDarkMode ? 'bg-slate-800/50 border-slate-700/50 text-emerald-400' : 'bg-emerald-50/50 border-emerald-100 text-emerald-600')
+          }`}>
+            <Cloud size={12} />
+            <span>{isSupabaseConfigured ? 'Database Sync' : 'Not Connected'}</span>
+          </div>
+
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-2 rounded-xl border transition-all duration-300 flex items-center justify-center ${
