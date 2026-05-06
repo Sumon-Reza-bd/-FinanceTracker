@@ -853,7 +853,18 @@ export default function App() {
       showNotification('Supabase not configured. Data is not being synced.', 'error');
       return;
     }
-    if (!dpsBankName || !dpsMonthlyDeposit || !dpsPeriodYears) return;
+    if (!dpsBankName) {
+      showNotification('ব্যাংকের নাম দিন', 'error');
+      return;
+    }
+    if (!dpsMonthlyDeposit || Number(dpsMonthlyDeposit) <= 0) {
+      showNotification('সঠিক জমার পরিমাণ দিন', 'error');
+      return;
+    }
+    if (!dpsPeriodYears || Number(dpsPeriodYears) <= 0) {
+      showNotification('সঠিক সময় (বছর) দিন', 'error');
+      return;
+    }
 
     const monthly = Number(dpsMonthlyDeposit);
     const years = Number(dpsPeriodYears);
@@ -862,6 +873,10 @@ export default function App() {
     const { totalPrincipal, maturityAmount } = calculateDpsMaturity(monthly, years, profit);
 
     const maturityDate = new Date(dpsStartDate);
+    if (isNaN(maturityDate.getTime())) {
+      showNotification('সঠিক শুরুর তারিখ দিন', 'error');
+      return;
+    }
     maturityDate.setFullYear(maturityDate.getFullYear() + years);
 
     const accountData = {
@@ -901,7 +916,7 @@ export default function App() {
           .select();
         
         if (error) throw error;
-        if (data) {
+        if (data && data.length > 0) {
           const newAccount: DPSAccount = {
             id: data[0].id,
             bankName: data[0].bank_name,
@@ -913,8 +928,10 @@ export default function App() {
             maturityDate: data[0].maturity_date
           };
           setDpsAccounts(prev => [...prev, newAccount]);
+          showNotification('DPS Account created successfully!');
+        } else {
+          throw new Error('No data returned from Suapbase');
         }
-        showNotification('DPS Account created successfully!');
       }
       
       // Reset
@@ -922,9 +939,10 @@ export default function App() {
       setDpsMonthlyDeposit('');
       setDpsPeriodYears('');
       setDpsProfitPercentage('');
-    } catch (error) {
+      setDpsFormType('account'); // Ensure we are on account tab
+    } catch (error: any) {
       console.error('Error saving DPS account:', error);
-      showNotification('Failed to save DPS account', 'error');
+      showNotification(`Failed: ${error.message || 'Unknown error'}`, 'error');
     }
   };
 
