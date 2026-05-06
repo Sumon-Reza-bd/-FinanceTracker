@@ -321,14 +321,14 @@ export default function App() {
       'Annual Leave': { used: 0, limit: Number(annualLimit) || 0 },
     };
 
-    yearLeaves.forEach(l => {
+    yearLeaves.filter(l => l.status === 'Approved').forEach(l => {
       const start = new Date(l.startDate);
       const end = new Date(l.endDate);
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
-      if (stats[l.type]) {
-        stats[l.type].used += diffDays;
+      if (stats[l.type as keyof typeof stats]) {
+        stats[l.type as keyof typeof stats].used += diffDays;
       }
     });
 
@@ -1816,7 +1816,11 @@ export default function App() {
                               type="number"
                               value={medical}
                               onChange={(e) => setMedical(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1825,7 +1829,11 @@ export default function App() {
                               type="number"
                               value={conveyance}
                               onChange={(e) => setConveyance(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                         </div>
@@ -1837,7 +1845,11 @@ export default function App() {
                               type="number"
                               value={food}
                               onChange={(e) => setFood(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1846,7 +1858,11 @@ export default function App() {
                               type="number"
                               value={attendanceBonus}
                               onChange={(e) => setAttendanceBonus(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                         </div>
@@ -1858,7 +1874,11 @@ export default function App() {
                               type="number"
                               value={days}
                               onChange={(e) => setDays(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1867,14 +1887,20 @@ export default function App() {
                               type="number"
                               value={rate}
                               onChange={(e) => setRate(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                         </div>
 
                         <button 
                           onClick={handleSavePaySlip}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 mt-2"
+                          className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${
+                            isDarkMode ? 'shadow-indigo-950/20' : 'shadow-indigo-100'
+                          }`}
                         >
                           <CheckCircle2 size={18} />
                           SAVE PAY SLIP
@@ -1884,8 +1910,10 @@ export default function App() {
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Previous Total</label>
-                          <div className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700">
-                            ৳{incrementCalculations.previousTotal.toLocaleString()}
+                          <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
+                            isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                          }`}>
+                            ৳ {incrementCalculations.previousTotal.toLocaleString()}
                           </div>
                         </div>
 
@@ -1896,10 +1924,14 @@ export default function App() {
                               <select 
                                 value={effectiveYear}
                                 onChange={(e) => setEffectiveYear(e.target.value)}
-                                className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none"
+                                className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 appearance-none transition-all ${
+                                  isDarkMode 
+                                  ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                  : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                                }`}
                               >
                                 {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(y => (
-                                  <option key={y} value={y}>{y}</option>
+                                  <option key={y} value={y} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{y}</option>
                                 ))}
                               </select>
                               <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -1907,8 +1939,10 @@ export default function App() {
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Base Deduction</label>
-                            <div className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700">
-                              ৳{incrementCalculations.baseDeduction.toLocaleString()}
+                            <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
+                              isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                            }`}>
+                              ৳ {incrementCalculations.baseDeduction.toLocaleString()}
                             </div>
                           </div>
                         </div>
@@ -1921,28 +1955,38 @@ export default function App() {
                               value={percentIncrease}
                               onChange={(e) => setPercentIncrease(e.target.value)}
                               placeholder="0"
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Amount +</label>
-                            <div className="w-full bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-1.5 text-sm font-bold text-emerald-600">
-                              ৳{incrementCalculations.amountPlus.toLocaleString()}
+                            <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
+                              isDarkMode ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                            }`}>
+                              ৳ {incrementCalculations.amountPlus.toLocaleString()}
                             </div>
                           </div>
                         </div>
 
                         <div className="pt-2">
                           <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest block mb-1">Gross Total</label>
-                          <div className="w-full bg-indigo-600 text-white rounded-xl p-3 shadow-lg shadow-indigo-100">
-                            <p className="text-[8px] font-bold uppercase tracking-widest opacity-80">New Gross Salary</p>
-                            <h3 className="text-xl font-bold">৳{incrementCalculations.grossTotal.toLocaleString()}</h3>
+                          <div className={`w-full rounded-xl p-4 shadow-lg ${
+                            isDarkMode ? 'bg-indigo-900 shadow-indigo-950/40' : 'bg-indigo-600 shadow-indigo-100 text-white'
+                          }`}>
+                            <p className={`text-[8px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-indigo-300' : 'text-white opacity-80'}`}>New Gross Salary</p>
+                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>৳ {incrementCalculations.grossTotal.toLocaleString()}</h3>
                           </div>
                         </div>
 
                         <button 
                           onClick={handleSaveIncrement}
-                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2 mt-2"
+                          className={`w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${
+                            isDarkMode ? 'shadow-emerald-950/20' : 'shadow-emerald-100'
+                          }`}
                         >
                           <CheckCircle2 size={18} />
                           SAVE INCREMENT
@@ -2050,49 +2094,55 @@ export default function App() {
 
                 {/* Right sub-column: Increment History Table */}
                 <div className="lg:col-span-7">
-                  <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-4 border-b border-slate-100 bg-orange-50/30 flex items-center gap-2">
+                  <section className={`rounded-2xl shadow-sm border overflow-hidden ${
+                    isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <div className={`p-4 border-b flex items-center gap-2 ${
+                      isDarkMode ? 'border-slate-800 bg-orange-900/10' : 'border-slate-100 bg-orange-50/30'
+                    }`}>
                       <div className="w-2 h-2 rounded-full bg-orange-500" />
-                      <h2 className="text-xs font-bold uppercase tracking-wider text-orange-800">Increment History</h2>
+                      <h2 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-orange-400' : 'text-orange-800'}`}>Increment History</h2>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-orange-50/50 border-b border-orange-100">
-                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-orange-800">YEAR</th>
-                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-orange-800">% INCREASE</th>
-                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-orange-800">AMOUNT +</th>
-                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-orange-800">G.TOTAL</th>
-                          <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-orange-800 text-right">ACTIONS</th>
+                        <tr className={`border-b ${isDarkMode ? 'bg-orange-900/5 border-orange-900/20' : 'bg-orange-50/50 border-orange-100'}`}>
+                          <th className={`px-6 py-4 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-orange-400/80' : 'text-orange-800'}`}>YEAR</th>
+                          <th className={`px-6 py-4 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-orange-400/80' : 'text-orange-800'}`}>% INCREASE</th>
+                          <th className={`px-6 py-4 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-orange-400/80' : 'text-orange-800'}`}>AMOUNT +</th>
+                          <th className={`px-6 py-4 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-orange-400/80' : 'text-orange-800'}`}>G.TOTAL</th>
+                          <th className={`px-6 py-4 text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-orange-400/80' : 'text-orange-800'} text-right`}>ACTIONS</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
                         {incrementHistory.length > 0 ? (
                           incrementHistory.map((inc) => (
-                            <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-6 py-5 text-sm font-bold text-slate-700">{inc.year}</td>
+                            <tr key={inc.id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50/50'}`}>
+                              <td className={`px-6 py-5 text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{inc.year}</td>
                               <td className="px-6 py-5">
-                                <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                                  isDarkMode ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50' : 'bg-emerald-50 text-emerald-600'
+                                }`}>
                                   {inc.percentIncrease}%
                                 </span>
                               </td>
-                              <td className="px-6 py-5 text-sm font-bold text-emerald-600">
-                                +৳{inc.amountPlus.toLocaleString()}
+                              <td className={`px-6 py-5 text-sm font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                +৳ {inc.amountPlus.toLocaleString()}
                               </td>
-                              <td className="px-6 py-5 text-sm font-bold text-slate-800">
-                                ৳{inc.grossTotal.toLocaleString()}
+                              <td className={`px-6 py-5 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                ৳ {inc.grossTotal.toLocaleString()}
                               </td>
                               <td className="px-6 py-5 text-right">
                                 <div className="flex items-center justify-end gap-3">
                                   <button 
                                     onClick={() => handleEditIncrement(inc)}
-                                    className="p-1.5 text-blue-400 hover:text-blue-600 transition-colors"
+                                    className={`p-1.5 transition-colors ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-400 hover:text-blue-600'}`}
                                   >
                                     <Edit2 size={16} />
                                   </button>
                                   <button 
                                     onClick={() => handleDeleteIncrement(inc.id)}
-                                    className="p-1.5 text-rose-400 hover:text-rose-600 transition-colors"
+                                    className={`p-1.5 transition-colors ${isDarkMode ? 'text-rose-400 hover:text-rose-300' : 'text-rose-400 hover:text-rose-600'}`}
                                   >
                                     <Trash2 size={16} />
                                   </button>
@@ -2102,7 +2152,7 @@ export default function App() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-xs font-medium italic">
+                            <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-xs font-medium italic">
                               No increment history found
                             </td>
                           </tr>
@@ -2121,19 +2171,21 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Leave Form & Limits */}
           <aside className="lg:col-span-3 space-y-6">
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Leave Information</h2>
+            <section className={`rounded-2xl shadow-sm border overflow-hidden ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
+              <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                <h2 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Leave Information</h2>
               </div>
               
-              <div className="p-3 bg-slate-50 border-b border-slate-100">
-                <div className="flex p-1 bg-slate-200/50 rounded-xl">
+              <div className={`p-3 border-b ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-950' : 'bg-slate-200/50'}`}>
                   <button 
                     onClick={() => setLeaveFormType('leave')}
                     className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
                       leaveFormType === 'leave' 
                         ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     LEAVE
@@ -2143,7 +2195,7 @@ export default function App() {
                     className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
                       leaveFormType === 'limit' 
                         ? 'bg-emerald-600 text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     LIMIT
@@ -2160,11 +2212,15 @@ export default function App() {
                         <select 
                           value={leaveType}
                           onChange={(e) => setLeaveType(e.target.value as LeaveType)}
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         >
-                          <option value="Casual Leave">Casual Leave</option>
-                          <option value="Medical Leave">Medical Leave</option>
-                          <option value="Annual Leave">Annual Leave</option>
+                          <option value="Casual Leave" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>Casual Leave</option>
+                          <option value="Medical Leave" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>Medical Leave</option>
+                          <option value="Annual Leave" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>Annual Leave</option>
                         </select>
                       </div>
 
@@ -2173,10 +2229,14 @@ export default function App() {
                         <select 
                           value={leaveStatus}
                           onChange={(e) => setLeaveStatus(e.target.value as LeaveStatus)}
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         >
-                          <option value="Pending">Pending</option>
-                          <option value="Approved">Approved</option>
+                          <option value="Pending" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>Pending</option>
+                          <option value="Approved" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>Approved</option>
                         </select>
                       </div>
                     </div>
@@ -2188,7 +2248,11 @@ export default function App() {
                           type="date"
                           value={leaveStartDate}
                           onChange={(e) => setLeaveStartDate(e.target.value)}
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         />
                       </div>
                       <div className="space-y-1">
@@ -2197,7 +2261,11 @@ export default function App() {
                           type="date"
                           value={leaveEndDate}
                           onChange={(e) => setLeaveEndDate(e.target.value)}
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         />
                       </div>
                     </div>
@@ -2209,13 +2277,19 @@ export default function App() {
                         onChange={(e) => setLeaveReason(e.target.value)}
                         placeholder="Briefly explain the purpose..."
                         rows={2}
-                        className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 resize-none"
+                        className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 resize-none transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                          : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                        }`}
                       />
                     </div>
 
                     <button 
                       onClick={handleApplyLeave}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 mt-2"
+                      className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${
+                        isDarkMode ? 'shadow-indigo-950/20' : 'shadow-indigo-100'
+                      }`}
                     >
                       <CheckCircle2 size={18} />
                       {editingLeaveId ? 'UPDATE APPLICATION' : 'SUBMIT APPLICATION'}
@@ -2226,7 +2300,9 @@ export default function App() {
                         <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest leading-none">View Data by Year</label>
                         <button 
                           onClick={() => setShowLeaveSummary(true)}
-                          className="p-1 px-2.5 rounded-full bg-slate-100/80 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-all flex items-center gap-1.5 border border-slate-200 shadow-sm"
+                          className={`p-1 px-2.5 rounded-full transition-all flex items-center gap-1.5 border shadow-sm ${
+                            isDarkMode ? 'bg-slate-800/80 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200' : 'bg-slate-100/80 text-slate-500 border-slate-200 hover:bg-slate-200 hover:text-slate-800'
+                          }`}
                           title="View Leave Summary"
                         >
                           <History size={11} className="text-indigo-500" />
@@ -2237,10 +2313,14 @@ export default function App() {
                         <select 
                           value={leaveFilterYear}
                           onChange={(e) => setLeaveFilterYear(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all cursor-pointer text-center"
+                          className={`w-full border rounded-xl px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 transition-all cursor-pointer text-center ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-indigo-500/20 focus:border-indigo-500' 
+                            : 'bg-slate-50 border-slate-200 text-slate-600 focus:ring-indigo-500/20 focus:border-indigo-400'
+                          }`}
                         >
                           {availableLeaveYears.map(y => (
-                            <option key={y} value={y}>{y}</option>
+                            <option key={y} value={y} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{y}</option>
                           ))}
                         </select>
                         <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -2253,7 +2333,9 @@ export default function App() {
                           setEditingLeaveId(null);
                           setLeaveReason('');
                         }}
-                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2"
+                        className={`w-full font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
                       >
                         <X size={18} />
                         CANCEL EDIT
@@ -2269,7 +2351,11 @@ export default function App() {
                         value={casualLimit}
                         onChange={(e) => setCasualLimit(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                          : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                        }`}
                       />
                     </div>
                     <div className="space-y-1">
@@ -2279,7 +2365,11 @@ export default function App() {
                         value={medicalLimit}
                         onChange={(e) => setMedicalLimit(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                          : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                        }`}
                       />
                     </div>
                     <div className="space-y-1">
@@ -2289,13 +2379,19 @@ export default function App() {
                         value={annualLimit}
                         onChange={(e) => setAnnualLimit(e.target.value)}
                         placeholder="0"
-                        className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                          : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                        }`}
                       />
                     </div>
 
                     <button 
                       onClick={handleSaveLeaveLimits}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2 mt-2"
+                      className={`w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${
+                        isDarkMode ? 'shadow-emerald-950/20' : 'shadow-emerald-100'
+                      }`}
                     >
                       <CheckCircle2 size={18} />
                       SAVE LIMITS
@@ -2322,10 +2418,12 @@ export default function App() {
                 const progressBarColor = type === 'Casual Leave' ? 'bg-indigo-600' : type === 'Medical Leave' ? 'bg-rose-500' : 'bg-emerald-500';
                 
                 return (
-                  <div key={type} className={`bg-white border-2 ${borderColor} rounded-[1.5rem] p-4 shadow-sm transition-all hover:shadow-md`}>
+                  <div key={type} className={`border-2 ${borderColor} rounded-[1.5rem] p-4 shadow-sm transition-all hover:shadow-md ${
+                    isDarkMode ? 'bg-slate-900 shadow-slate-950/20' : 'bg-white'
+                  }`}>
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="text-[14px] font-bold uppercase tracking-tight text-slate-800 leading-none mb-1">{type} {leaveFilterYear}</h3>
+                        <h3 className={`text-[14px] font-bold uppercase tracking-tight leading-none mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{type} {leaveFilterYear}</h3>
                         <span className="text-[9px] font-semibold uppercase text-slate-400 tracking-[0.1em] leading-none">BALANCE</span>
                       </div>
                       <div className={`${iconColor}`}>
@@ -2334,12 +2432,16 @@ export default function App() {
                     </div>
                     
                     <div className="mt-4 mb-3">
-                      <span className="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">
+                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight border shadow-sm ${
+                        isDarkMode 
+                        ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/50' 
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                      }`}>
                         {available} DAYS AVAILABLE
                       </span>
                     </div>
 
-                    <div className="h-1 bg-slate-100/50 rounded-full mb-4 overflow-hidden">
+                    <div className={`h-1 rounded-full mb-4 overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100/50'}`}>
                       <div 
                         className={`h-full ${progressBarColor} transition-all duration-500 rounded-full`} 
                         style={{ width: `${Math.min(100, progress)}%` }}
@@ -2402,12 +2504,12 @@ export default function App() {
                               <td className="px-5 py-3">
                                 <div className="flex flex-col">
                                   <span className={`text-[11px] font-bold uppercase leading-tight mb-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{leave.type}</span>
-                                  <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-tight">On: {new Date(leave.appliedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}</span>
+                                  <span className={`text-[8px] font-semibold uppercase tracking-tight ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>On: {new Date(leave.appliedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}</span>
                                 </div>
                               </td>
                               <td className="px-5 py-3">
                                 <div className="flex flex-col items-center">
-                                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight mb-0.5">
+                                  <span className={`text-[9px] font-semibold uppercase tracking-tight mb-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                     {new Date(leave.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')} — {new Date(leave.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                                   </span>
                                   <span className={`text-[12px] font-bold tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{diffDays} Days</span>
@@ -2433,7 +2535,7 @@ export default function App() {
                       ) : (
                         <tr>
                           <td colSpan={3} className="px-5 py-20 text-center">
-                            <span className="text-[10px] font-bold uppercase text-slate-300 tracking-[0.2em]">NO ENTRIES</span>
+                            <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`}>NO ENTRIES</span>
                           </td>
                         </tr>
                       )}
@@ -2451,7 +2553,7 @@ export default function App() {
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                     <h2 className={`text-[11px] font-bold uppercase tracking-[0.1em] ${isDarkMode ? 'text-amber-500' : 'text-[#A35200]'}`}>PENDING/REJECTED ({leaveFilterYear})</h2>
                   </div>
-                  <div className="w-5 h-5 rounded-full border border-amber-500/30 flex items-center justify-center">
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isDarkMode ? 'border-amber-500/20' : 'border-amber-500/30'}`}>
                     <History size={10} className="text-amber-500" />
                   </div>
                 </div>
@@ -2477,12 +2579,12 @@ export default function App() {
                               <td className="px-5 py-3">
                                 <div className="flex flex-col">
                                   <span className={`text-[11px] font-bold uppercase leading-tight mb-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{leave.type}</span>
-                                  <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-widest">On: {new Date(leave.appliedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}</span>
+                                  <span className={`text-[8px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>On: {new Date(leave.appliedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}</span>
                                 </div>
                               </td>
                               <td className="px-5 py-3">
                                 <div className="flex flex-col items-center">
-                                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight mb-0.5">
+                                  <span className={`text-[9px] font-semibold uppercase tracking-tight mb-0.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                     {new Date(leave.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')} — {new Date(leave.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                                   </span>
                                   <span className={`text-[12px] font-bold tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{diffDays} Days</span>
@@ -2499,7 +2601,7 @@ export default function App() {
                                     <Edit2 size={12} />
                                   </button>
                                   <button 
-                                    onClick={() => confirmDelete(leave.id, 'leave-application')}
+                                    onClick={() => confirmDelete(leave.id, 'leave-application')} 
                                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                                       isDarkMode ? 'bg-slate-800 text-rose-400 hover:text-rose-200 hover:bg-slate-700' : 'bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100'
                                     }`}
@@ -2514,7 +2616,7 @@ export default function App() {
                       ) : (
                         <tr>
                           <td colSpan={3} className="px-5 py-20 text-center">
-                            <span className="text-[10px] font-bold uppercase text-slate-300 tracking-[0.2em]">NO ENTRIES</span>
+                            <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}`}>NO ENTRIES</span>
                           </td>
                         </tr>
                       )}
@@ -2886,10 +2988,14 @@ export default function App() {
                 )}
               </div>
               
-              <div className="p-6 bg-slate-50 border-t border-slate-100">
+              <div className={`p-6 border-t ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'
+              }`}>
                 <button 
                   onClick={() => setShowLeaveSummary(false)}
-                  className="w-full bg-slate-900 text-white font-bold py-3 rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all uppercase text-[11px] tracking-widest"
+                  className={`w-full font-bold py-3 rounded-2xl shadow-xl transition-all uppercase text-[11px] tracking-widest ${
+                    isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700 shadow-slate-950/40' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200'
+                  }`}
                 >
                   CLOSE SUMMARY
                 </button>
