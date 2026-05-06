@@ -853,18 +853,7 @@ export default function App() {
       showNotification('Supabase not configured. Data is not being synced.', 'error');
       return;
     }
-    if (!dpsBankName) {
-      showNotification('ব্যাংকের নাম দিন', 'error');
-      return;
-    }
-    if (!dpsMonthlyDeposit || Number(dpsMonthlyDeposit) <= 0) {
-      showNotification('সঠিক জমার পরিমাণ দিন', 'error');
-      return;
-    }
-    if (!dpsPeriodYears || Number(dpsPeriodYears) <= 0) {
-      showNotification('সঠিক সময় (বছর) দিন', 'error');
-      return;
-    }
+    if (!dpsBankName || !dpsMonthlyDeposit || !dpsPeriodYears) return;
 
     const monthly = Number(dpsMonthlyDeposit);
     const years = Number(dpsPeriodYears);
@@ -873,10 +862,6 @@ export default function App() {
     const { totalPrincipal, maturityAmount } = calculateDpsMaturity(monthly, years, profit);
 
     const maturityDate = new Date(dpsStartDate);
-    if (isNaN(maturityDate.getTime())) {
-      showNotification('সঠিক শুরুর তারিখ দিন', 'error');
-      return;
-    }
     maturityDate.setFullYear(maturityDate.getFullYear() + years);
 
     const accountData = {
@@ -916,7 +901,7 @@ export default function App() {
           .select();
         
         if (error) throw error;
-        if (data && data.length > 0) {
+        if (data) {
           const newAccount: DPSAccount = {
             id: data[0].id,
             bankName: data[0].bank_name,
@@ -928,10 +913,8 @@ export default function App() {
             maturityDate: data[0].maturity_date
           };
           setDpsAccounts(prev => [...prev, newAccount]);
-          showNotification('DPS Account created successfully!');
-        } else {
-          throw new Error('No data returned from Suapbase');
         }
+        showNotification('DPS Account created successfully!');
       }
       
       // Reset
@@ -939,10 +922,9 @@ export default function App() {
       setDpsMonthlyDeposit('');
       setDpsPeriodYears('');
       setDpsProfitPercentage('');
-      setDpsFormType('account'); // Ensure we are on account tab
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving DPS account:', error);
-      showNotification(`Failed: ${error.message || 'Unknown error'}`, 'error');
+      showNotification('Failed to save DPS account', 'error');
     }
   };
 
@@ -963,26 +945,6 @@ export default function App() {
       return;
     }
     if (!selectedDpsAccountId || !depositAmount) return;
-
-    // Check if deposit already exists for this account in the same month/year
-    const newDepositDate = new Date(depositDate);
-    const newMonth = newDepositDate.getMonth();
-    const newYear = newDepositDate.getFullYear();
-
-    const alreadyDeposited = dpsDeposits.some(d => {
-      // If we are editing, don't check the current record against itself
-      if (editingDpsDepositId && d.id === editingDpsDepositId) return false;
-      
-      const dDate = new Date(d.date);
-      return d.accountId === selectedDpsAccountId && 
-             dDate.getMonth() === newMonth && 
-             dDate.getFullYear() === newYear;
-    });
-
-    if (alreadyDeposited) {
-      showNotification('এই মাসে অলরেডি এই অ্যাকাউন্টে ডিপোজিট করা হয়েছে!', 'error');
-      return;
-    }
 
     const depositData = {
       account_id: selectedDpsAccountId,
@@ -1449,7 +1411,7 @@ export default function App() {
               className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-indigo-900/80 shadow-indigo-900/20' : 'bg-indigo-600 shadow-indigo-100'}`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Balance</p>
-              <h3 className="text-2xl font-bold">৳{(balance || 0).toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold">৳{balance.toLocaleString()}</h3>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -1458,7 +1420,7 @@ export default function App() {
               className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-emerald-900/80 shadow-emerald-900/20' : 'bg-emerald-500 shadow-emerald-100'}`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Income</p>
-              <h3 className="text-2xl font-bold">৳{(totals.income || 0).toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold">৳{totals.income.toLocaleString()}</h3>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -1467,7 +1429,7 @@ export default function App() {
               className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-rose-900/80 shadow-rose-900/20' : 'bg-rose-500 shadow-rose-100'}`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Expense</p>
-              <h3 className="text-2xl font-bold">৳{(totals.expense || 0).toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold">৳{totals.expense.toLocaleString()}</h3>
             </motion.div>
           </div>
 
@@ -1498,7 +1460,7 @@ export default function App() {
                           <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{item.name}</span>
                         </div>
                         <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                          ৳{(item.amount || 0).toLocaleString()} <span className="text-slate-400 font-medium">({item.percentage}%)</span>
+                          ৳{item.amount.toLocaleString()} <span className="text-slate-400 font-medium">({item.percentage}%)</span>
                         </span>
                       </div>
                       <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
@@ -1568,7 +1530,7 @@ export default function App() {
                             t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
                           }`}>
                             {t.type === 'income' ? <ArrowUpCircle size={12} /> : <ArrowDownCircle size={12} />}
-                            ৳{(t.amount || 0).toLocaleString()}
+                            ৳{t.amount.toLocaleString()}
                           </p>
                           <div className="flex items-center justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
@@ -1718,7 +1680,7 @@ export default function App() {
                           <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
                             isDarkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-200 border-slate-300 text-slate-700'
                           }`}>
-                            ৳{(currentDpsCalculations.totalPrincipal || 0).toLocaleString()}
+                            ৳{currentDpsCalculations.totalPrincipal.toLocaleString()}
                           </div>
                         </div>
                         <div className="space-y-0.5">
@@ -1726,7 +1688,7 @@ export default function App() {
                           <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
                             isDarkMode ? 'bg-slate-950 border-slate-800 text-emerald-500' : 'bg-slate-200 border-slate-300 text-emerald-600'
                           }`}>
-                            ৳{(currentDpsCalculations.totalProfit || 0).toLocaleString()}
+                            ৳{currentDpsCalculations.totalProfit.toLocaleString()}
                           </div>
                         </div>
                         <div className="space-y-0.5">
@@ -1734,7 +1696,7 @@ export default function App() {
                           <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
                             isDarkMode ? 'bg-slate-950 border-slate-800 text-indigo-400' : 'bg-slate-200 border-slate-300 text-indigo-600'
                           }`}>
-                            ৳{(currentDpsCalculations.maturityAmount || 0).toLocaleString()}
+                            ৳{currentDpsCalculations.maturityAmount.toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -1833,7 +1795,7 @@ export default function App() {
                   className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-indigo-900/80 shadow-indigo-950/20' : 'bg-indigo-600 shadow-indigo-100'}`}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">T. Deposit</p>
-                  <h3 className="text-2xl font-bold">৳{(dpsStats.totalDeposited || 0).toLocaleString()}</h3>
+                  <h3 className="text-2xl font-bold">৳{dpsStats.totalDeposited.toLocaleString()}</h3>
                 </motion.div>
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
@@ -1842,7 +1804,7 @@ export default function App() {
                   className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-emerald-900/80 shadow-emerald-950/20' : 'bg-emerald-500 shadow-emerald-100'}`}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">T. Profit</p>
-                  <h3 className="text-2xl font-bold">৳{(dpsStats.totalProfit || 0).toLocaleString()}</h3>
+                  <h3 className="text-2xl font-bold">৳{dpsStats.totalProfit.toLocaleString()}</h3>
                 </motion.div>
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
@@ -1851,7 +1813,7 @@ export default function App() {
                   className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-blue-900/80 shadow-blue-950/20' : 'bg-blue-500 shadow-blue-100'}`}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Amount</p>
-                  <h3 className="text-2xl font-bold">৳{(dpsStats.grandTotal || 0).toLocaleString()}</h3>
+                  <h3 className="text-2xl font-bold">৳{dpsStats.grandTotal.toLocaleString()}</h3>
                 </motion.div>
               </div>
 
@@ -1913,7 +1875,7 @@ export default function App() {
                             <div className="grid grid-cols-2 gap-y-2 text-[11px]">
                               <div>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Monthly</p>
-                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>৳{(acc.monthlyDeposit || 0).toLocaleString()}</p>
+                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>৳{acc.monthlyDeposit.toLocaleString()}</p>
                               </div>
                               <div>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Profit %</p>
@@ -1945,13 +1907,13 @@ export default function App() {
                                     // Accumulated profit for this account
                                     const currentBalance = schedule[monthsPaid - 1].balance;
                                     const currentPrincipal = acc.monthlyDeposit * monthsPaid;
-                                    return ((currentBalance || 0) - (currentPrincipal || 0)).toLocaleString();
+                                    return (currentBalance - currentPrincipal).toLocaleString();
                                   })()}
                                 </p>
                               </div>
                               <div className={`pt-1 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100/50'}`}>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Maturity Amount</p>
-                                <p className="text-indigo-400 font-bold">৳{(acc.targetTotal || 0).toLocaleString()}</p>
+                                <p className="text-indigo-400 font-bold">৳{acc.targetTotal.toLocaleString()}</p>
                               </div>
                               
                               <div className="col-span-2 pt-1">
@@ -2059,7 +2021,7 @@ export default function App() {
                                 </p>
                               </div>
                               <div className="text-right shrink-0">
-                                <p className="font-bold text-sm text-emerald-500">৳{(d.amount || 0).toLocaleString()}</p>
+                                <p className="font-bold text-sm text-emerald-500">৳{d.amount.toLocaleString()}</p>
                                 <div className="flex items-center justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button                                    onClick={() => handleEditDPSDeposit(d)}
                                     className="p-1 text-indigo-400 hover:text-indigo-600 transition-colors"
@@ -2261,7 +2223,7 @@ export default function App() {
                           <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
                             isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                           }`}>
-                            ৳ {(incrementCalculations.previousTotal || 0).toLocaleString()}
+                            ৳ {incrementCalculations.previousTotal.toLocaleString()}
                           </div>
                         </div>
 
@@ -2290,7 +2252,7 @@ export default function App() {
                             <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
                               isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                             }`}>
-                              ৳ {(incrementCalculations.baseDeduction || 0).toLocaleString()}
+                              ৳ {incrementCalculations.baseDeduction.toLocaleString()}
                             </div>
                           </div>
                         </div>
@@ -2315,7 +2277,7 @@ export default function App() {
                             <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
                               isDarkMode ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'
                             }`}>
-                              ৳ {(incrementCalculations.amountPlus || 0).toLocaleString()}
+                              ৳ {incrementCalculations.amountPlus.toLocaleString()}
                             </div>
                           </div>
                         </div>
@@ -2326,7 +2288,7 @@ export default function App() {
                             isDarkMode ? 'bg-indigo-900 shadow-indigo-950/40' : 'bg-indigo-600 shadow-indigo-100 text-white'
                           }`}>
                             <p className={`text-[8px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-indigo-300' : 'text-white opacity-80'}`}>New Gross Salary</p>
-                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>৳ {(incrementCalculations.grossTotal || 0).toLocaleString()}</h3>
+                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>৳ {incrementCalculations.grossTotal.toLocaleString()}</h3>
                           </div>
                         </div>
 
@@ -2363,11 +2325,11 @@ export default function App() {
                     <div className="p-5 space-y-5 flex-1">
                       <div className="flex justify-between items-center">
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>BASIC SALARY</span>
-                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(salaryCalculations.basicSalary || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.basicSalary.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE RENT ALLOWANCE</span>
-                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(salaryCalculations.houseRent || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.houseRent.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>MEDICAL ALLOWANCE</span>
@@ -2387,14 +2349,14 @@ export default function App() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>TIFFIN {days || '0'} DAYS</span>
-                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(salaryCalculations.tiffinAmount || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.tiffinAmount.toLocaleString()}</span>
                       </div>
                     </div>
                     <div className={`p-4 m-4 rounded-2xl flex justify-between items-center shadow-lg ${
                       isDarkMode ? 'bg-blue-900 shadow-blue-950/20' : 'bg-blue-600 shadow-blue-200'
                     }`}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-white">TOTAL EARNINGS</span>
-                      <span className="text-xl font-bold text-white">৳ {(salaryCalculations.totalEarnings || 0).toLocaleString()}</span>
+                      <span className="text-xl font-bold text-white">৳ {salaryCalculations.totalEarnings.toLocaleString()}</span>
                     </div>
                   </section>
 
@@ -2414,28 +2376,28 @@ export default function App() {
                           <Gift size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">YEARLY BONUS</span>
                         </div>
-                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(salaryCalculations.yearlyBonus || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.yearlyBonus.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3 text-emerald-600">
                           <Coins size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">EID-UL-FITR BONUS</span>
                         </div>
-                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(salaryCalculations.eidUlFitrBonus || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.eidUlFitrBonus.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3 text-emerald-600">
                           <Coins size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">EID-UL-ADHA BONUS</span>
                         </div>
-                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(salaryCalculations.eidUlAdhaBonus || 0).toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.eidUlAdhaBonus.toLocaleString()}</span>
                       </div>
                     </div>
                     <div className={`p-4 m-4 rounded-2xl flex justify-between items-center shadow-lg ${
                       isDarkMode ? 'bg-emerald-900 shadow-emerald-950/20' : 'bg-emerald-600 shadow-emerald-200'
                     }`}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-white">TOTAL BONUS</span>
-                      <span className="text-xl font-bold text-white">৳ {( (salaryCalculations.yearlyBonus || 0) + (salaryCalculations.eidUlFitrBonus || 0) + (salaryCalculations.eidUlAdhaBonus || 0) ).toLocaleString()}</span>
+                      <span className="text-xl font-bold text-white">৳ {(salaryCalculations.yearlyBonus + salaryCalculations.eidUlFitrBonus + salaryCalculations.eidUlAdhaBonus).toLocaleString()}</span>
                     </div>
                   </section>
                 </div>
@@ -2475,10 +2437,10 @@ export default function App() {
                                 </span>
                               </td>
                               <td className={`px-6 py-5 text-sm font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                                +৳ {(inc.amountPlus || 0).toLocaleString()}
+                                +৳ {inc.amountPlus.toLocaleString()}
                               </td>
                               <td className={`px-6 py-5 text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                                ৳ {(inc.grossTotal || 0).toLocaleString()}
+                                ৳ {inc.grossTotal.toLocaleString()}
                               </td>
                               <td className="px-6 py-5 text-right">
                                 <div className="flex items-center justify-end gap-3">
@@ -3143,13 +3105,13 @@ export default function App() {
                         isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'
                       }`}>
                         <span className="text-[9px] font-bold uppercase text-slate-400 tracking-[0.1em] mb-1.5 leading-none">TOTAL PAID</span>
-                        <span className={`text-xl font-bold leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>৳ {(stats.total || 0).toLocaleString()}</span>
+                        <span className={`text-xl font-bold leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>৳ {stats.total.toLocaleString()}</span>
                       </div>
                       <div className={`border rounded-2xl p-4 flex flex-col ${
                         isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'
                       }`}>
                         <span className="text-[9px] font-bold uppercase text-slate-400 tracking-[0.1em] mb-1.5 leading-none">AVG ({stats.count} MO)</span>
-                        <span className={`text-xl font-bold leading-none ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>৳ {(stats.avg || 0).toLocaleString()}</span>
+                        <span className={`text-xl font-bold leading-none ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>৳ {stats.avg.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -3417,7 +3379,7 @@ export default function App() {
                   <h3 className="font-bold text-lg">DPS Profit Schedule</h3>
                   <p className="text-xs opacity-80">
                     {dpsAccounts.find(a => a.id === viewingScheduleId)?.bankName} • 
-                    ৳{(dpsAccounts.find(a => a.id === viewingScheduleId)?.monthlyDeposit || 0).toLocaleString()}/month
+                    ৳{dpsAccounts.find(a => a.id === viewingScheduleId)?.monthlyDeposit.toLocaleString()}/month
                   </p>
                 </div>
                 <button 
@@ -3447,10 +3409,10 @@ export default function App() {
                       return schedule.map((row) => (
                         <tr key={row.month} className="hover:bg-slate-50 transition-colors">
                           <td className="py-2 px-1 font-medium text-slate-500">{row.month}</td>
-                          <td className="py-2 px-1 text-slate-600">{(row.deposit || 0).toLocaleString()}</td>
-                          <td className="py-2 px-1 text-slate-600 font-bold">{(row.totalPrincipal || 0).toLocaleString()}</td>
-                          <td className="py-2 px-1 text-emerald-600 font-bold">+{(row.monthlyProfit || 0).toLocaleString()}</td>
-                          <td className="py-2 px-1 text-indigo-600 font-bold text-right">{(row.balance || 0).toLocaleString()}</td>
+                          <td className="py-2 px-1 text-slate-600">{row.deposit.toLocaleString()}</td>
+                          <td className="py-2 px-1 text-slate-600 font-bold">{row.totalPrincipal.toLocaleString()}</td>
+                          <td className="py-2 px-1 text-emerald-600 font-bold">+{row.monthlyProfit.toLocaleString()}</td>
+                          <td className="py-2 px-1 text-indigo-600 font-bold text-right">{row.balance.toLocaleString()}</td>
                         </tr>
                       ));
                     })()}

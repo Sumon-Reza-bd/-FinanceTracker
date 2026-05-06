@@ -1,7 +1,7 @@
 -- FinanceTracker Supabase Schema
 
 -- Transactions table
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   type TEXT NOT NULL CHECK (type IN ('expense', 'income')),
   category TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE transactions (
 );
 
 -- DPS Accounts table
-CREATE TABLE dps_accounts (
+CREATE TABLE IF NOT EXISTS dps_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bank_name TEXT NOT NULL,
   monthly_deposit NUMERIC NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE dps_accounts (
 );
 
 -- DPS Deposits table
-CREATE TABLE dps_deposits (
+CREATE TABLE IF NOT EXISTS dps_deposits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID REFERENCES dps_accounts(id) ON DELETE CASCADE,
   amount NUMERIC NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE dps_deposits (
 );
 
 -- Increment History table
-CREATE TABLE increment_history (
+CREATE TABLE IF NOT EXISTS increment_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   year TEXT NOT NULL,
   percent_increase NUMERIC NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE increment_history (
 );
 
 -- Leave Applications table
-CREATE TABLE leaves (
+CREATE TABLE IF NOT EXISTS leaves (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   type TEXT NOT NULL,
   status TEXT NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE leaves (
 );
 
 -- Bills table
-CREATE TABLE bills (
+CREATE TABLE IF NOT EXISTS bills (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   type TEXT NOT NULL,
   amount NUMERIC NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE bills (
 );
 
 -- Settings table for global app states
-CREATE TABLE app_settings (
+CREATE TABLE IF NOT EXISTS app_settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW()
