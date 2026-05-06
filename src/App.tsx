@@ -30,7 +30,10 @@ import {
   CreditCard,
   Edit3,
   Gift,
-  Coins
+  Coins,
+  PiggyBank,
+  Briefcase,
+  ReceiptText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Transaction, TransactionType, CATEGORIES, MONTHS, YEARS, DPSAccount, DPSDeposit, IncrementHistory, LeaveApplication, LeaveType, LeaveStatus, BillEntry, BillType } from './types';
@@ -801,76 +804,84 @@ export default function App() {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-        {/* Left: Category Dropdown */}
-        <div className="group relative">
-          <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer transition-colors py-1">
-            <span className="text-sm font-medium">Category</span>
-            <ChevronDown size={16} className="group-hover:rotate-180 transition-transform duration-300" />
+      <header className="bg-white border-b border-slate-200 px-6 py-2 flex items-center justify-between sticky top-0 z-[100]">
+        {/* Left: Branding */}
+        <div className="flex items-center gap-2 group cursor-pointer">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-100 group-hover:scale-110 transition-transform">
+            <Wallet size={18} />
           </div>
-          
-          {/* Dropdown Menu */}
-          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+          <h1 className="font-bold text-lg tracking-tight text-slate-800">FinanceTracker</h1>
+        </div>
+
+        {/* Center: Pill Navigation */}
+        <nav className="absolute left-1/2 -translate-x-1/2 bg-white border border-slate-100 shadow-sm rounded-full p-1 hidden md:flex items-center gap-1">
+          {[
+            { id: 'financial', label: 'Financial', icon: Wallet },
+            { id: 'dps', label: 'DPS', icon: PiggyBank },
+            { id: 'salary', label: 'Salary', icon: Briefcase },
+            { id: 'leave', label: 'Leave', icon: Calendar },
+            { id: 'bills', label: 'Bills', icon: ReceiptText },
+          ].map((item) => {
+            const isActive = currentView === item.id;
+            const Icon = item.icon;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id as any)}
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
+                  isActive 
+                    ? 'text-white' 
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeNav"
+                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-md shadow-blue-200"
+                    transition={{ type: "spring", duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10">
+                  <Icon size={16} />
+                </span>
+                <span className="relative z-10">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Mobile: View Switcher Dropdown */}
+        <div className="md:hidden group relative">
+          <button className="flex items-center gap-1 p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+            <MoreHorizontal size={20} />
+          </button>
+          <div className="absolute top-full right-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
             <div className="p-1">
-              <button 
-                onClick={() => setCurrentView('financial')}
-                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                  currentView === 'financial' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <PieChart size={14} />
-                Financial Info
-              </button>
-              <button 
-                onClick={() => setCurrentView('dps')}
-                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                  currentView === 'dps' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <CreditCard size={14} />
-                DPS Info
-              </button>
-              <button 
-                onClick={() => setCurrentView('salary')}
-                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                  currentView === 'salary' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <Banknote size={14} />
-                Salary Info
-              </button>
-              <button 
-                onClick={() => setCurrentView('leave')}
-                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                  currentView === 'leave' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <Calendar size={14} />
-                Leave Info
-              </button>
-              <button 
-                onClick={() => setCurrentView('bills')}
-                className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                  currentView === 'bills' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <Zap size={14} />
-                Bill Info
-              </button>
+              {[
+                { id: 'financial', label: 'Financial', icon: Wallet },
+                { id: 'dps', label: 'DPS', icon: PiggyBank },
+                { id: 'salary', label: 'Salary', icon: Briefcase },
+                { id: 'leave', label: 'Leave', icon: Calendar },
+                { id: 'bills', label: 'Bills', icon: ReceiptText },
+              ].map((item) => (
+                <button 
+                  key={item.id}
+                  onClick={() => setCurrentView(item.id as any)}
+                  className={`w-full text-left px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
+                    currentView === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <item.icon size={14} />
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Center: Logo */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-            <Wallet size={20} />
-          </div>
-          <h1 className="font-bold text-xl tracking-tight text-slate-800">FinanceTracker</h1>
-        </div>
-
-        {/* Right: Empty space to balance flexbox */}
-        <div className="w-20 hidden md:block"></div>
+        {/* Right sub-area (to keep centered nav stable) */}
+        <div className="w-40 hidden md:block" />
       </header>
 
       <main className="w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1247,13 +1258,13 @@ export default function App() {
                       {/* Auto Calculated Fields */}
                       <div className="grid grid-cols-3 gap-2">
                         <div className="space-y-0.5">
-                          <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Total Deposit</label>
+                          <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">T. Deposit</label>
                           <div className="w-full bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700">
                             ৳{currentDpsCalculations.totalPrincipal.toLocaleString()}
                           </div>
                         </div>
                         <div className="space-y-0.5">
-                          <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Total Profit</label>
+                          <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">T. Profit</label>
                           <div className="w-full bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-bold text-emerald-600">
                             ৳{currentDpsCalculations.totalProfit.toLocaleString()}
                           </div>
@@ -1339,7 +1350,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-indigo-600 rounded-2xl p-4 text-white shadow-xl shadow-indigo-100"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Deposited</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">T. Deposit</p>
                   <h3 className="text-2xl font-bold">৳{dpsStats.totalDeposited.toLocaleString()}</h3>
                 </motion.div>
                 <motion.div 
@@ -1348,7 +1359,7 @@ export default function App() {
                   transition={{ delay: 0.1 }}
                   className="bg-emerald-500 rounded-2xl p-4 text-white shadow-xl shadow-emerald-100"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Profit (Est.)</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">T. Profit</p>
                   <h3 className="text-2xl font-bold">৳{dpsStats.totalProfit.toLocaleString()}</h3>
                 </motion.div>
                 <motion.div 
@@ -1429,7 +1440,7 @@ export default function App() {
                                 <p className="text-slate-700 font-bold">{new Date(acc.maturityDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                               </div>
                               <div className="pt-1 border-t border-slate-100/50">
-                                <p className="text-slate-400 font-bold uppercase tracking-tighter">Total Deposit (Current)</p>
+                                <p className="text-slate-400 font-bold uppercase tracking-tighter">T. Deposit</p>
                                 <p className="text-emerald-600 font-bold">৳{currentPrincipal.toLocaleString()}</p>
                               </div>
                               <div className="pt-1 border-t border-slate-100/50">
@@ -1437,7 +1448,7 @@ export default function App() {
                                 <p className="text-slate-700 font-bold">৳{(acc.monthlyDeposit * acc.periodYears * 12).toLocaleString()}</p>
                               </div>
                               <div className="pt-1 border-t border-slate-100/50">
-                                <p className="text-slate-400 font-bold uppercase tracking-tighter">Total Profit (Est.)</p>
+                                <p className="text-slate-400 font-bold uppercase tracking-tighter">T. Profit</p>
                                 <p className="text-emerald-600 font-bold">
                                   ৳{(() => {
                                     const { schedule } = calculateDpsMaturity(acc.monthlyDeposit, acc.periodYears, acc.profitPercentage);
