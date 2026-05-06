@@ -33,7 +33,9 @@ import {
   Coins,
   PiggyBank,
   Briefcase,
-  ReceiptText
+  ReceiptText,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Transaction, TransactionType, CATEGORIES, MONTHS, YEARS, DPSAccount, DPSDeposit, IncrementHistory, LeaveApplication, LeaveType, LeaveStatus, BillEntry, BillType } from './types';
@@ -88,6 +90,21 @@ export default function App() {
   const [viewingScheduleId, setViewingScheduleId] = useState<string | null>(null);
   const [dpsHistoryFilter, setDpsHistoryFilter] = useState<string>('all');
   const [showWelcome, setShowWelcome] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  // Theme Effect
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Welcome Effect
   useEffect(() => {
@@ -777,7 +794,7 @@ export default function App() {
   }, [dpsMonthlyDeposit, dpsPeriodYears, dpsProfitPercentage, dpsStartDate]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans`}>
       {/* Notifications */}
       <AnimatePresence>
         {notification && (
@@ -785,14 +802,20 @@ export default function App() {
             initial={{ opacity: 0, y: -50, x: '-50%' }}
             animate={{ opacity: 1, y: 20, x: '-50%' }}
             exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className="fixed left-1/2 z-50 flex items-center gap-3 bg-white border border-slate-200 px-4 py-3 rounded-2xl shadow-xl shadow-slate-200/50 min-w-[300px]"
+            className={`fixed left-1/2 z-50 flex items-center gap-3 border px-4 py-3 rounded-2xl shadow-xl min-w-[300px] ${
+              isDarkMode 
+                ? 'bg-slate-900 border-slate-700 shadow-slate-950/50' 
+                : 'bg-white border-slate-200 shadow-slate-200/50'
+            }`}
           >
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              notification.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+              notification.type === 'success' 
+                ? (isDarkMode ? 'bg-emerald-900/40 text-emerald-400' : 'bg-emerald-100 text-emerald-600') 
+                : (isDarkMode ? 'bg-rose-900/40 text-rose-400' : 'bg-rose-100 text-rose-600')
             }`}>
               <CheckCircle2 size={18} />
             </div>
-            <p className="text-sm font-bold text-slate-800 flex-1">{notification.message}</p>
+            <p className={`text-sm font-bold flex-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{notification.message}</p>
             <button 
               onClick={() => setNotification(null)}
               className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -804,17 +827,21 @@ export default function App() {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-2 flex items-center justify-between sticky top-0 z-[100]">
+      <header className={`border-b px-6 py-2 flex items-center justify-between sticky top-0 z-[100] transition-colors duration-300 ${
+        isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+      }`}>
         {/* Left: Branding */}
         <div className="flex items-center gap-2 group cursor-pointer">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-100 group-hover:scale-110 transition-transform">
             <Wallet size={18} />
           </div>
-          <h1 className="font-bold text-lg tracking-tight text-slate-800">FinanceTracker</h1>
+          <h1 className={`font-bold text-lg tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>FinanceTracker</h1>
         </div>
 
         {/* Center: Pill Navigation */}
-        <nav className="absolute left-1/2 -translate-x-1/2 bg-white border border-slate-100 shadow-sm rounded-full p-1 hidden md:flex items-center gap-1">
+        <nav className={`absolute left-1/2 -translate-x-1/2 border shadow-sm rounded-full p-1 hidden md:flex items-center gap-1 transition-colors duration-300 ${
+          isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'
+        }`}>
           {[
             { id: 'financial', label: 'Financial', icon: Wallet },
             { id: 'dps', label: 'DPS', icon: PiggyBank },
@@ -832,13 +859,13 @@ export default function App() {
                 className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
                   isActive 
                     ? 'text-white' 
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    : isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeNav"
-                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-md shadow-blue-200"
+                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-md shadow-blue-900/20"
                     transition={{ type: "spring", duration: 0.5 }}
                   />
                 )}
@@ -851,37 +878,54 @@ export default function App() {
           })}
         </nav>
 
-        {/* Mobile: View Switcher Dropdown */}
-        <div className="md:hidden group relative">
-          <button className="flex items-center gap-1 p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-            <MoreHorizontal size={20} />
+        {/* Right Area: Theme Toggle & More */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`p-2 rounded-xl border transition-all duration-300 flex items-center justify-center ${
+              isDarkMode 
+                ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700' 
+                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+            }`}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <div className="absolute top-full right-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
-            <div className="p-1">
-              {[
-                { id: 'financial', label: 'Financial', icon: Wallet },
-                { id: 'dps', label: 'DPS', icon: PiggyBank },
-                { id: 'salary', label: 'Salary', icon: Briefcase },
-                { id: 'leave', label: 'Leave', icon: Calendar },
-                { id: 'bills', label: 'Bills', icon: ReceiptText },
-              ].map((item) => (
-                <button 
-                  key={item.id}
-                  onClick={() => setCurrentView(item.id as any)}
-                  className={`w-full text-left px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
-                    currentView === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <item.icon size={14} />
-                  {item.label}
-                </button>
-              ))}
+
+          {/* Mobile: View Switcher Dropdown */}
+          <div className="md:hidden group relative">
+            <button className={`flex items-center gap-1 p-2 rounded-lg transition-colors ${
+              isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-500 hover:bg-slate-100'
+            }`}>
+              <MoreHorizontal size={20} />
+            </button>
+            <div className={`absolute top-full right-0 mt-1 w-40 border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden ${
+              isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200'
+            }`}>
+              <div className="p-1">
+                {[
+                  { id: 'financial', label: 'Financial', icon: Wallet },
+                  { id: 'dps', label: 'DPS', icon: PiggyBank },
+                  { id: 'salary', label: 'Salary', icon: Briefcase },
+                  { id: 'leave', label: 'Leave', icon: Calendar },
+                  { id: 'bills', label: 'Bills', icon: ReceiptText },
+                ].map((item) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => setCurrentView(item.id as any)}
+                    className={`w-full text-left px-4 py-2 text-xs font-bold rounded-lg transition-colors flex items-center gap-2 ${
+                      currentView === item.id 
+                        ? (isDarkMode ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-50 text-indigo-600') 
+                        : (isDarkMode ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-50')
+                    }`}
+                  >
+                    <item.icon size={14} />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Right sub-area (to keep centered nav stable) */}
-        <div className="w-40 hidden md:block" />
       </header>
 
       <main className="w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -889,20 +933,20 @@ export default function App() {
           <>
             {/* Left Sidebar - Form */}
             <aside className="lg:col-span-3 space-y-6">
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Financial Info / Add Entry</h2>
+          <section className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl shadow-sm border overflow-hidden`}>
+            <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
+              <h2 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Financial Info / Add Entry</h2>
             </div>
             
             <div className="p-3 space-y-2">
               {/* Type Toggle */}
-              <div className="flex p-1 bg-slate-100 rounded-xl">
+              <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
                 <button 
                   onClick={() => setType('expense')}
                   className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${
                     type === 'expense' 
                     ? 'bg-rose-500 text-white shadow-md' 
-                    : 'text-slate-500 hover:text-slate-700'
+                    : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   EXPENSE
@@ -912,7 +956,7 @@ export default function App() {
                   className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all ${
                     type === 'income' 
                     ? 'bg-emerald-500 text-white shadow-md' 
-                    : 'text-slate-500 hover:text-slate-700'
+                    : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   INCOME
@@ -926,9 +970,13 @@ export default function App() {
                   <select 
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all"
+                    className={`w-full border rounded-xl px-3 py-1.5 text-sm appearance-none focus:outline-none focus:ring-2 transition-all ${
+                      isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10 focus:border-purple-500' 
+                      : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20 focus:border-purple-400'
+                    }`}
                   >
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CATEGORIES.map(c => <option key={c} value={c} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{c}</option>)}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                 </div>
@@ -943,7 +991,11 @@ export default function App() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all"
+                    className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                      isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10 focus:border-purple-500' 
+                      : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20 focus:border-purple-400'
+                    }`}
                   />
                 </div>
                 <div className="space-y-0.5">
@@ -953,7 +1005,11 @@ export default function App() {
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all"
+                      className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                        isDarkMode 
+                        ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10 focus:border-purple-500' 
+                        : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20 focus:border-purple-400'
+                      }`}
                     />
                   </div>
                 </div>
@@ -967,14 +1023,20 @@ export default function App() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Weekly Grocery"
-                  className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all"
+                  className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                    isDarkMode 
+                    ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10 focus:border-purple-500' 
+                    : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20 focus:border-purple-400'
+                  }`}
                 />
               </div>
 
               {/* Add Button */}
               <button 
                 onClick={handleAddTransaction}
-                className="w-full bg-[#2563EB] hover:bg-blue-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                className={`w-full bg-[#2563EB] hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
+                  isDarkMode ? 'shadow-lg shadow-blue-900/40' : 'shadow-lg shadow-blue-200'
+                }`}
               >
                 <Plus size={18} />
                 {editingId ? 'UPDATE TRANSACTION' : 'ADD TRANSACTION'}
@@ -983,8 +1045,10 @@ export default function App() {
           </section>
 
           {/* Filter Section */}
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 space-y-2">
-            <div className="flex items-center gap-2 text-slate-500">
+          <section className={`rounded-2xl shadow-sm border p-3 space-y-2 ${
+            isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
+          }`}>
+            <div className={`flex items-center gap-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
               <ChevronDown size={14} />
               <h3 className="text-[10px] font-bold uppercase tracking-widest">View Data by Month/Year</h3>
             </div>
@@ -995,9 +1059,13 @@ export default function App() {
                   <select 
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(e.target.value)}
-                    className="w-full bg-white border border-purple-300 rounded-xl px-3 py-2 text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className={`w-full border rounded-xl px-3 py-2 text-xs appearance-none focus:outline-none focus:ring-2 transition-all ${
+                      isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                      : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                    }`}
                   >
-                    {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {MONTHS.map(m => <option key={m} value={m} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{m}</option>)}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                 </div>
@@ -1008,9 +1076,13 @@ export default function App() {
                   <select 
                     value={filterYear}
                     onChange={(e) => setFilterYear(e.target.value)}
-                    className="w-full bg-white border border-purple-300 rounded-xl px-3 py-2 text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className={`w-full border rounded-xl px-3 py-2 text-xs appearance-none focus:outline-none focus:ring-2 transition-all ${
+                      isDarkMode 
+                      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                      : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                    }`}
                   >
-                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                    {availableYears.map(y => <option key={y} value={y} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{y}</option>)}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                 </div>
@@ -1026,7 +1098,7 @@ export default function App() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-indigo-600 rounded-2xl p-4 text-white shadow-xl shadow-indigo-100"
+              className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-indigo-900/80 shadow-indigo-900/20' : 'bg-indigo-600 shadow-indigo-100'}`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Balance</p>
               <h3 className="text-2xl font-bold">৳{balance.toLocaleString()}</h3>
@@ -1035,7 +1107,7 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-emerald-500 rounded-2xl p-4 text-white shadow-xl shadow-emerald-100"
+              className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-emerald-900/80 shadow-emerald-900/20' : 'bg-emerald-500 shadow-emerald-100'}`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Income</p>
               <h3 className="text-2xl font-bold">৳{totals.income.toLocaleString()}</h3>
@@ -1044,7 +1116,7 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-rose-500 rounded-2xl p-4 text-white shadow-xl shadow-rose-100"
+              className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-rose-900/80 shadow-rose-900/20' : 'bg-rose-500 shadow-rose-100'}`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Expense</p>
               <h3 className="text-2xl font-bold">৳{totals.expense.toLocaleString()}</h3>
@@ -1053,8 +1125,10 @@ export default function App() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Detailed Breakdown */}
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-slate-100 flex items-center gap-2">
+            <section className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
+              <div className={`p-4 border-b flex items-center gap-2 ${isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
                 <PieChart size={16} className="text-blue-600" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-blue-600">Detailed Breakdown (Expense)</h2>
               </div>
@@ -1065,17 +1139,21 @@ export default function App() {
                       <div className="flex justify-between items-end">
                         <div className="flex items-center gap-2">
                           <div className={`p-1 rounded-lg ${
-                            idx % 3 === 0 ? 'bg-indigo-50 text-indigo-600' : idx % 3 === 1 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'
+                            idx % 3 === 0 
+                              ? (isDarkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-50 text-indigo-600') 
+                              : idx % 3 === 1 
+                                ? (isDarkMode ? 'bg-rose-900/50 text-rose-400' : 'bg-rose-50 text-rose-600') 
+                                : (isDarkMode ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
                           }`}>
                             {getCategoryIcon(item.name)}
                           </div>
-                          <span className="text-[10px] font-bold uppercase text-slate-800 tracking-wider">{item.name}</span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{item.name}</span>
                         </div>
-                        <span className="text-xs font-bold text-slate-600">
+                        <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                           ৳{item.amount.toLocaleString()} <span className="text-slate-400 font-medium">({item.percentage}%)</span>
                         </span>
                       </div>
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${item.percentage}%` }}
@@ -1097,8 +1175,10 @@ export default function App() {
             </section>
 
             {/* Transaction History */}
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-slate-100 flex items-center gap-2">
+            <section className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
+              <div className={`p-4 border-b flex items-center gap-2 ${isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
                 <History size={16} className="text-orange-500" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-orange-500">Transaction History</h2>
               </div>
@@ -1111,19 +1191,25 @@ export default function App() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className={`group flex items-center gap-3 p-2 rounded-xl border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all relative border-l-4 ${
+                        className={`group flex items-center gap-3 p-2 rounded-xl border transition-all relative border-l-4 ${
+                          isDarkMode 
+                            ? 'bg-slate-800/50 border-slate-700 hover:border-blue-900 hover:bg-blue-900/10' 
+                            : 'bg-white border-slate-100 hover:border-blue-100 hover:bg-blue-50/30'
+                        } ${
                           t.type === 'income' ? 'border-l-emerald-500' : 'border-l-rose-500'
                         }`}
                       >
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          t.type === 'income' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                          t.type === 'income' 
+                            ? (isDarkMode ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-600') 
+                            : (isDarkMode ? 'bg-rose-900/50 text-rose-400' : 'bg-rose-100 text-rose-600')
                         }`}>
                           {getCategoryIcon(t.category)}
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm text-slate-800 uppercase tracking-tight truncate">{t.category}</h4>
-                          <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                          <h4 className={`font-bold text-sm uppercase tracking-tight truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{t.category}</h4>
+                          <p className={`text-[10px] font-medium flex items-center gap-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                             {new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                             {t.description && <span className="before:content-['•'] before:mx-1 truncate">{t.description}</span>}
                           </p>
@@ -1131,7 +1217,7 @@ export default function App() {
 
                         <div className="text-right shrink-0">
                           <p className={`font-bold text-sm flex items-center justify-end gap-1 ${
-                            t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                            t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
                           }`}>
                             {t.type === 'income' ? <ArrowUpCircle size={12} /> : <ArrowDownCircle size={12} />}
                             ৳{t.amount.toLocaleString()}
@@ -1169,20 +1255,22 @@ export default function App() {
           <>
             {/* DPS View */}
             <aside className="lg:col-span-3 space-y-6">
-              <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">DPS Management</h2>
+              <section className={`rounded-2xl shadow-sm border overflow-hidden ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                  <h2 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>DPS Management</h2>
                 </div>
                 
                 <div className="p-3 space-y-3">
                   {/* DPS Form Toggle */}
-                  <div className="flex p-1 bg-slate-100 rounded-xl">
+                  <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
                     <button 
                       onClick={() => setDpsFormType('account')}
                       className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
                         dpsFormType === 'account' 
                         ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
                       CREATE ACCOUNT
@@ -1192,7 +1280,7 @@ export default function App() {
                       className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
                         dpsFormType === 'deposit' 
                         ? 'bg-emerald-500 text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
                       ADD DEPOSIT
@@ -1208,7 +1296,11 @@ export default function App() {
                           value={dpsBankName}
                           onChange={(e) => setDpsBankName(e.target.value)}
                           placeholder="e.g. Sonali Bank"
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -1219,7 +1311,11 @@ export default function App() {
                             value={dpsMonthlyDeposit}
                             onChange={(e) => setDpsMonthlyDeposit(e.target.value)}
                             placeholder="0"
-                            className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                            className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                              isDarkMode 
+                              ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                              : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                            }`}
                           />
                         </div>
                         <div className="space-y-0.5">
@@ -1229,7 +1325,11 @@ export default function App() {
                             value={dpsPeriodYears}
                             onChange={(e) => setDpsPeriodYears(e.target.value)}
                             placeholder="0"
-                            className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                            className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                              isDarkMode 
+                              ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                              : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                            }`}
                           />
                         </div>
                       </div>
@@ -1241,7 +1341,11 @@ export default function App() {
                             value={dpsProfitPercentage}
                             onChange={(e) => setDpsProfitPercentage(e.target.value)}
                             placeholder="0"
-                            className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                            className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                              isDarkMode 
+                              ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                              : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                            }`}
                           />
                         </div>
                         <div className="space-y-0.5">
@@ -1250,7 +1354,11 @@ export default function App() {
                             type="date"
                             value={dpsStartDate}
                             onChange={(e) => setDpsStartDate(e.target.value)}
-                            className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                            className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                              isDarkMode 
+                              ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                              : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                            }`}
                           />
                         </div>
                       </div>
@@ -1259,19 +1367,25 @@ export default function App() {
                       <div className="grid grid-cols-3 gap-2">
                         <div className="space-y-0.5">
                           <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">T. Deposit</label>
-                          <div className="w-full bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700">
+                          <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
+                            isDarkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-200 border-slate-300 text-slate-700'
+                          }`}>
                             ৳{currentDpsCalculations.totalPrincipal.toLocaleString()}
                           </div>
                         </div>
                         <div className="space-y-0.5">
                           <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">T. Profit</label>
-                          <div className="w-full bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-bold text-emerald-600">
+                          <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
+                            isDarkMode ? 'bg-slate-950 border-slate-800 text-emerald-500' : 'bg-slate-200 border-slate-300 text-emerald-600'
+                          }`}>
                             ৳{currentDpsCalculations.totalProfit.toLocaleString()}
                           </div>
                         </div>
                         <div className="space-y-0.5">
                           <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Maturity Am.</label>
-                          <div className="w-full bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 text-sm font-bold text-indigo-600">
+                          <div className={`w-full border rounded-xl px-3 py-1.5 text-sm font-bold ${
+                            isDarkMode ? 'bg-slate-950 border-slate-800 text-indigo-400' : 'bg-slate-200 border-slate-300 text-indigo-600'
+                          }`}>
                             ৳{currentDpsCalculations.maturityAmount.toLocaleString()}
                           </div>
                         </div>
@@ -1279,7 +1393,9 @@ export default function App() {
 
                       <button 
                         onClick={handleAddDPSAccount}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
+                        className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          isDarkMode ? 'shadow-lg shadow-indigo-950' : 'shadow-lg shadow-indigo-100'
+                        }`}
                       >
                         <Plus size={18} />
                         {editingDpsAccountId ? 'UPDATE ACCOUNT' : 'CREATE ACCOUNT'}
@@ -1292,11 +1408,15 @@ export default function App() {
                         <select 
                           value={selectedDpsAccountId}
                           onChange={(e) => setSelectedDpsAccountId(e.target.value)}
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         >
-                          <option value="">Select Account</option>
+                          <option value="" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>Select Account</option>
                           {dpsAccounts.map(acc => (
-                            <option key={acc.id} value={acc.id}>{acc.bankName}</option>
+                            <option key={acc.id} value={acc.id} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{acc.bankName}</option>
                           ))}
                         </select>
                       </div>
@@ -1307,7 +1427,11 @@ export default function App() {
                             type="number"
                             value={depositAmount}
                             onChange={(e) => setDepositAmount(e.target.value)}
-                            className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                            className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                              isDarkMode 
+                              ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                              : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                            }`}
                           />
                         </div>
                         <div className="space-y-0.5">
@@ -1316,7 +1440,11 @@ export default function App() {
                             type="date"
                             value={depositDate}
                             onChange={(e) => setDepositDate(e.target.value)}
-                            className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                            className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                              isDarkMode 
+                              ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                              : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                            }`}
                           />
                         </div>
                       </div>
@@ -1326,12 +1454,18 @@ export default function App() {
                           type="text"
                           value={depositNote}
                           onChange={(e) => setDepositNote(e.target.value)}
-                          className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                            isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/10' 
+                            : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                          }`}
                         />
                       </div>
                       <button 
                         onClick={handleAddDPSDeposit}
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2"
+                        className={`w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          isDarkMode ? 'shadow-lg shadow-emerald-950' : 'shadow-lg shadow-emerald-100'
+                        }`}
                       >
                         <Plus size={18} />
                         ADD DEPOSIT
@@ -1348,7 +1482,7 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-indigo-600 rounded-2xl p-4 text-white shadow-xl shadow-indigo-100"
+                  className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-indigo-900/80 shadow-indigo-950/20' : 'bg-indigo-600 shadow-indigo-100'}`}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">T. Deposit</p>
                   <h3 className="text-2xl font-bold">৳{dpsStats.totalDeposited.toLocaleString()}</h3>
@@ -1357,7 +1491,7 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-emerald-500 rounded-2xl p-4 text-white shadow-xl shadow-emerald-100"
+                  className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-emerald-900/80 shadow-emerald-950/20' : 'bg-emerald-500 shadow-emerald-100'}`}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">T. Profit</p>
                   <h3 className="text-2xl font-bold">৳{dpsStats.totalProfit.toLocaleString()}</h3>
@@ -1366,7 +1500,7 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-blue-500 rounded-2xl p-4 text-white shadow-xl shadow-blue-100"
+                  className={`rounded-2xl p-4 text-white shadow-xl ${isDarkMode ? 'bg-blue-900/80 shadow-blue-950/20' : 'bg-blue-500 shadow-blue-100'}`}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-0.5">Total Amount</p>
                   <h3 className="text-2xl font-bold">৳{dpsStats.grandTotal.toLocaleString()}</h3>
@@ -1375,8 +1509,10 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Account Info */}
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                  <div className="p-4 border-b border-slate-100 flex items-center gap-2">
+                <section className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <div className={`p-4 border-b flex items-center gap-2 ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
                     <CreditCard size={16} className="text-indigo-600" />
                     <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Account Information</h2>
                   </div>
@@ -1399,11 +1535,15 @@ export default function App() {
                         }, 0));
 
                         return (
-                          <div key={acc.id} className="group p-3 rounded-xl border border-slate-100 bg-slate-50/30 space-y-2 relative hover:border-indigo-100 transition-all">
+                          <div key={acc.id} className={`group p-3 rounded-xl border space-y-2 relative transition-all ${
+                            isDarkMode ? 'bg-slate-800/40 border-slate-800 hover:border-indigo-900' : 'bg-slate-50/30 border-slate-100 hover:border-indigo-100'
+                          }`}>
                             <div className="flex justify-between items-start">
-                              <h4 className="font-bold text-slate-800">{acc.bankName}</h4>
+                              <h4 className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{acc.bankName}</h4>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  isDarkMode ? 'bg-indigo-900/40 text-indigo-400' : 'bg-indigo-100 text-indigo-600'
+                                }`}>
                                   {acc.periodYears} Years
                                 </span>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1425,31 +1565,31 @@ export default function App() {
                             <div className="grid grid-cols-2 gap-y-2 text-[11px]">
                               <div>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Monthly</p>
-                                <p className="text-slate-700 font-bold">৳{acc.monthlyDeposit.toLocaleString()}</p>
+                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>৳{acc.monthlyDeposit.toLocaleString()}</p>
                               </div>
                               <div>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Profit %</p>
-                                <p className="text-slate-700 font-bold">{acc.profitPercentage}%</p>
+                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{acc.profitPercentage}%</p>
                               </div>
                               <div>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Start Date</p>
-                                <p className="text-slate-700 font-bold">{new Date(acc.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{new Date(acc.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                               </div>
                               <div>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Maturity Date</p>
-                                <p className="text-slate-700 font-bold">{new Date(acc.maturityDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{new Date(acc.maturityDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                               </div>
-                              <div className="pt-1 border-t border-slate-100/50">
+                              <div className={`pt-1 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100/50'}`}>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">T. Deposit</p>
-                                <p className="text-emerald-600 font-bold">৳{currentPrincipal.toLocaleString()}</p>
+                                <p className="text-emerald-500 font-bold">৳{currentPrincipal.toLocaleString()}</p>
                               </div>
-                              <div className="pt-1 border-t border-slate-100/50">
+                              <div className={`pt-1 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100/50'}`}>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Target Deposit</p>
-                                <p className="text-slate-700 font-bold">৳{(acc.monthlyDeposit * acc.periodYears * 12).toLocaleString()}</p>
+                                <p className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>৳{(acc.monthlyDeposit * acc.periodYears * 12).toLocaleString()}</p>
                               </div>
-                              <div className="pt-1 border-t border-slate-100/50">
+                              <div className={`pt-1 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100/50'}`}>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">T. Profit</p>
-                                <p className="text-emerald-600 font-bold">
+                                <p className="text-emerald-500 font-bold">
                                   ৳{(() => {
                                     const { schedule } = calculateDpsMaturity(acc.monthlyDeposit, acc.periodYears, acc.profitPercentage);
                                     const monthsPaid = Math.min(schedule.length, accDeposits.length);
@@ -1461,15 +1601,17 @@ export default function App() {
                                   })()}
                                 </p>
                               </div>
-                              <div className="pt-1 border-t border-slate-100/50">
+                              <div className={`pt-1 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100/50'}`}>
                                 <p className="text-slate-400 font-bold uppercase tracking-tighter">Maturity Amount</p>
-                                <p className="text-indigo-600 font-bold">৳{acc.targetTotal.toLocaleString()}</p>
+                                <p className="text-indigo-400 font-bold">৳{acc.targetTotal.toLocaleString()}</p>
                               </div>
                               
                               <div className="col-span-2 pt-1">
                                 <button 
                                   onClick={() => setViewingScheduleId(acc.id)}
-                                  className="w-full py-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-all uppercase tracking-widest flex items-center justify-center gap-1"
+                                  className={`w-full py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase tracking-widest flex items-center justify-center gap-1 ${
+                                    isDarkMode ? 'text-indigo-400 bg-indigo-950/40 hover:bg-indigo-900/60' : 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100'
+                                  }`}
                                 >
                                   <PieChart size={12} />
                                   View Profit Schedule
@@ -1486,14 +1628,14 @@ export default function App() {
                                   
                                   return (
                                     <>
-                                      <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                      <div className={`h-3 rounded-full overflow-hidden border ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                                         <div 
                                           className="h-full bg-indigo-500 rounded-full transition-all duration-500"
                                           style={{ width: `${progressPercent}%` }}
                                         />
                                       </div>
                                       <div className="flex justify-between text-[9px] font-bold uppercase tracking-tighter">
-                                        <span className="text-indigo-600">Complete: {monthsPaid}M</span>
+                                        <span className="text-indigo-500">Complete: {monthsPaid}M</span>
                                         <span className="text-slate-400">Remaining: {remainingMonths}M</span>
                                       </div>
                                     </>
@@ -1514,8 +1656,10 @@ export default function App() {
                 </section>
 
                 {/* DPS Transaction History */}
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-2">
+                <section className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <div className={`p-4 border-b flex items-center justify-between gap-2 ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
                     <div className="flex items-center gap-2">
                       <History size={16} className="text-emerald-500" />
                       <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-500">DPS Transaction History</h2>
@@ -1526,11 +1670,15 @@ export default function App() {
                       <select 
                         value={dpsHistoryFilter}
                         onChange={(e) => setDpsHistoryFilter(e.target.value)}
-                        className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 pr-8 text-[10px] font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer"
+                        className={`appearance-none border rounded-lg px-3 py-1 pr-8 text-[10px] font-bold focus:outline-none focus:ring-2 transition-all cursor-pointer ${
+                          isDarkMode 
+                            ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-emerald-500/20 focus:border-emerald-500' 
+                            : 'bg-slate-50 border-slate-200 text-slate-600 focus:ring-emerald-500/20 focus:border-emerald-500'
+                        }`}
                       >
-                        <option value="all">All Accounts</option>
+                        <option value="all" className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>All Accounts</option>
                         {dpsAccounts.map(acc => (
-                          <option key={acc.id} value={acc.id}>{acc.bankName}</option>
+                          <option key={acc.id} value={acc.id} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{acc.bankName}</option>
                         ))}
                       </select>
                       <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -1546,21 +1694,26 @@ export default function App() {
                         filteredDeposits.map(d => {
                           const acc = dpsAccounts.find(a => a.id === d.accountId);
                           return (
-                            <div key={d.id} className="group flex items-center gap-3 p-2 rounded-xl border border-slate-100 bg-emerald-50/10 border-l-4 border-l-emerald-500 hover:border-emerald-200 transition-all">
-                              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                            <div key={d.id} className={`group flex items-center gap-3 p-2 rounded-xl border border-l-4 transition-all ${
+                              isDarkMode 
+                                ? 'bg-emerald-900/10 border-slate-800 border-l-emerald-500 hover:border-emerald-900' 
+                                : 'bg-emerald-50/10 border-slate-100 border-l-emerald-500 hover:border-emerald-200'
+                            }`}>
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                isDarkMode ? 'bg-emerald-950 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                              }`}>
                                 <Banknote size={18} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-sm text-slate-800 truncate">{acc?.bankName || 'Unknown Account'}</h4>
-                                <p className="text-[10px] text-slate-500 font-medium">
+                                <h4 className={`font-bold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{acc?.bankName || 'Unknown Account'}</h4>
+                                <p className={`text-[10px] font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                                   {new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} {d.description && `• ${d.description}`}
                                 </p>
                               </div>
                               <div className="text-right shrink-0">
-                                <p className="font-bold text-sm text-emerald-600">৳{d.amount.toLocaleString()}</p>
+                                <p className="font-bold text-sm text-emerald-500">৳{d.amount.toLocaleString()}</p>
                                 <div className="flex items-center justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button 
-                                    onClick={() => handleEditDPSDeposit(d)}
+                                  <button                                    onClick={() => handleEditDPSDeposit(d)}
                                     className="p-1 text-indigo-400 hover:text-indigo-600 transition-colors"
                                   >
                                     <Edit2 size={12} />
@@ -1593,18 +1746,20 @@ export default function App() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column: Forms (DPS Style) */}
               <aside className="lg:col-span-3 space-y-6">
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Salary Information</h2>
+                <section className={`rounded-2xl shadow-sm border overflow-hidden ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                    <h2 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Salary Information</h2>
                   </div>
-                  <div className="p-3 bg-slate-50 border-b border-slate-100">
-                    <div className="flex p-1 bg-slate-200/50 rounded-xl">
+                  <div className={`p-3 border-b ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                    <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-950' : 'bg-slate-200/50'}`}>
                       <button 
                         onClick={() => setSalaryFormType('payslip')}
                         className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
                           salaryFormType === 'payslip' 
-                            ? 'bg-indigo-600 text-white shadow-md' 
-                            : 'text-slate-500 hover:text-slate-700'
+                            ? (isDarkMode ? 'bg-rose-600' : 'bg-indigo-600') + ' text-white shadow-md'
+                            : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                         }`}
                       >
                         PAY SLIP
@@ -1614,7 +1769,7 @@ export default function App() {
                         className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
                           salaryFormType === 'increment' 
                             ? 'bg-emerald-600 text-white shadow-md' 
-                            : 'text-slate-500 hover:text-slate-700'
+                            : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                         }`}
                       >
                         ADD INCREMENT
@@ -1632,7 +1787,11 @@ export default function App() {
                               type="number"
                               value={grossSalary}
                               onChange={(e) => setGrossSalary(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                           <div className="space-y-1">
@@ -1641,7 +1800,11 @@ export default function App() {
                               type="number"
                               value={baseDeduction}
                               onChange={(e) => setBaseDeduction(e.target.value)}
-                              className="w-full bg-white border border-purple-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                              className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                                isDarkMode 
+                                ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-purple-500/10' 
+                                : 'bg-white border-purple-300 text-slate-900 focus:ring-purple-500/20'
+                              }`}
                             />
                           </div>
                         </div>
@@ -1796,50 +1959,60 @@ export default function App() {
                   {/* Left sub-column: Cards stacked vertically */}
                   <div className="lg:col-span-5 space-y-6">
                     {/* Earnings & Allowances Card */}
-                    <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-blue-50/30 flex items-center gap-2">
+                    <section className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${
+                      isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                    }`}>
+                    <div className={`p-4 border-b flex items-center gap-2 ${
+                      isDarkMode ? 'border-slate-800 bg-blue-900/10' : 'border-slate-100 bg-blue-50/30'
+                    }`}>
                       <div className="w-2 h-2 rounded-full bg-blue-600" />
                       <h2 className="text-xs font-bold uppercase tracking-wider text-blue-600">EARNINGS & ALLOWANCES</h2>
                     </div>
                     <div className="p-5 space-y-5 flex-1">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">BASIC SALARY</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {salaryCalculations.basicSalary.toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>BASIC SALARY</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.basicSalary.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">HOUSE RENT ALLOWANCE</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {salaryCalculations.houseRent.toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE RENT ALLOWANCE</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.houseRent.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">MEDICAL ALLOWANCE</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {(Number(medical) || 0).toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>MEDICAL ALLOWANCE</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(Number(medical) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">CONVEYANCE ALLOWANCE</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {(Number(conveyance) || 0).toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>CONVEYANCE ALLOWANCE</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(Number(conveyance) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">FOOD ALLOWANCE</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {(Number(food) || 0).toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>FOOD ALLOWANCE</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(Number(food) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">ATTENDANCE BONUS</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {(Number(attendanceBonus) || 0).toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>ATTENDANCE BONUS</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {(Number(attendanceBonus) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TIFFIN {days || '0'} DAYS</span>
-                        <span className="text-sm font-bold text-slate-800">৳ {salaryCalculations.tiffinAmount.toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>TIFFIN {days || '0'} DAYS</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.tiffinAmount.toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="p-4 bg-blue-600 m-4 rounded-2xl flex justify-between items-center shadow-lg shadow-blue-200">
+                    <div className={`p-4 m-4 rounded-2xl flex justify-between items-center shadow-lg ${
+                      isDarkMode ? 'bg-blue-900 shadow-blue-950/20' : 'bg-blue-600 shadow-blue-200'
+                    }`}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-white">TOTAL EARNINGS</span>
                       <span className="text-xl font-bold text-white">৳ {salaryCalculations.totalEarnings.toLocaleString()}</span>
                     </div>
                   </section>
 
                   {/* Bonus Breakdown Card */}
-                  <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 bg-emerald-50/30 flex items-center gap-2">
+                  <section className={`rounded-2xl shadow-sm border overflow-hidden flex flex-col ${
+                    isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <div className={`p-4 border-b flex items-center gap-2 ${
+                      isDarkMode ? 'border-slate-800 bg-emerald-900/10' : 'border-slate-100 bg-emerald-50/30'
+                    }`}>
                       <div className="w-2 h-2 rounded-full bg-emerald-600" />
                       <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-600">BONUS BREAKDOWN</h2>
                     </div>
@@ -1849,24 +2022,26 @@ export default function App() {
                           <Gift size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">YEARLY BONUS</span>
                         </div>
-                        <span className="text-sm font-bold text-slate-800">৳ {salaryCalculations.yearlyBonus.toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.yearlyBonus.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3 text-emerald-600">
                           <Coins size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">EID-UL-FITR BONUS</span>
                         </div>
-                        <span className="text-sm font-bold text-slate-800">৳ {salaryCalculations.eidUlFitrBonus.toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.eidUlFitrBonus.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3 text-emerald-600">
                           <Coins size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">EID-UL-ADHA BONUS</span>
                         </div>
-                        <span className="text-sm font-bold text-slate-800">৳ {salaryCalculations.eidUlAdhaBonus.toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {salaryCalculations.eidUlAdhaBonus.toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="p-4 bg-emerald-600 m-4 rounded-2xl flex justify-between items-center shadow-lg shadow-emerald-200">
+                    <div className={`p-4 m-4 rounded-2xl flex justify-between items-center shadow-lg ${
+                      isDarkMode ? 'bg-emerald-900 shadow-emerald-950/20' : 'bg-emerald-600 shadow-emerald-200'
+                    }`}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-white">TOTAL BONUS</span>
                       <span className="text-xl font-bold text-white">৳ {(salaryCalculations.yearlyBonus + salaryCalculations.eidUlFitrBonus + salaryCalculations.eidUlAdhaBonus).toLocaleString()}</span>
                     </div>
@@ -2172,13 +2347,17 @@ export default function App() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex flex-col">
+                      <div className={`rounded-xl p-3 flex flex-col border ${
+                        isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'
+                      }`}>
                         <span className="text-[8px] font-bold uppercase text-slate-400 tracking-[0.1em] mb-1 leading-none">TOTAL LIMIT</span>
-                        <span className="text-base font-bold text-slate-800 leading-none">{stats.limit} Days</span>
+                        <span className={`text-base font-bold leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{stats.limit} Days</span>
                       </div>
-                      <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex flex-col">
+                      <div className={`rounded-xl p-3 flex flex-col border ${
+                        isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'
+                      }`}>
                         <span className="text-[8px] font-bold uppercase text-slate-400 tracking-[0.1em] mb-1 leading-none">TOTAL USED</span>
-                        <span className={`text-base font-bold leading-none ${stats.used > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{stats.used} Days</span>
+                        <span className={`text-base font-bold leading-none ${stats.used > 0 ? (isDarkMode ? 'text-rose-400' : 'text-rose-600') : 'text-slate-400'}`}>{stats.used} Days</span>
                       </div>
                     </div>
                   </div>
@@ -2189,13 +2368,15 @@ export default function App() {
             {/* Leave History Section Split into Approved and Pending */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Approved Section */}
-              <section className="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[300px]">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <section className={`rounded-[1.5rem] shadow-sm border overflow-hidden flex flex-col min-h-[300px] ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-emerald-700">APPROVED ({leaveFilterYear})</h2>
+                    <h2 className={`text-[11px] font-bold uppercase tracking-[0.1em] ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>APPROVED ({leaveFilterYear})</h2>
                   </div>
-                  <div className="w-5 h-5 rounded-full border border-emerald-500/30 flex items-center justify-center">
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isDarkMode ? 'border-emerald-500/20' : 'border-emerald-500/30'}`}>
                     <CheckCircle2 size={10} className="text-emerald-500" />
                   </div>
                 </div>
@@ -2203,13 +2384,13 @@ export default function App() {
                 <div className="overflow-x-auto flex-1 h-full">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/20 border-b border-slate-50">
+                      <tr className={`${isDarkMode ? 'bg-slate-800/10 border-b border-slate-800' : 'bg-slate-50/20 border-b border-slate-50'}`}>
                         <th className="px-5 py-3 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">TYPE / APPLIED</th>
                         <th className="px-5 py-3 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 text-center">DURATION</th>
                         <th className="px-5 py-3 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 text-right">ACTIONS</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-50'}`}>
                       {filteredLeavesByYear.filter(l => l.status === 'Approved').length > 0 ? (
                         filteredLeavesByYear.filter(l => l.status === 'Approved').map((leave) => {
                           const start = new Date(leave.startDate);
@@ -2217,10 +2398,10 @@ export default function App() {
                           const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                           
                           return (
-                            <tr key={leave.id} className="hover:bg-slate-50/50 transition-colors">
+                            <tr key={leave.id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/20' : 'hover:bg-slate-50/50'}`}>
                               <td className="px-5 py-3">
                                 <div className="flex flex-col">
-                                  <span className="text-[11px] font-bold uppercase text-slate-800 leading-tight mb-0.5">{leave.type}</span>
+                                  <span className={`text-[11px] font-bold uppercase leading-tight mb-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{leave.type}</span>
                                   <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-tight">On: {new Date(leave.appliedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}</span>
                                 </div>
                               </td>
@@ -2229,15 +2410,19 @@ export default function App() {
                                   <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight mb-0.5">
                                     {new Date(leave.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')} — {new Date(leave.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                                   </span>
-                                  <span className="text-[12px] font-bold text-slate-800 tracking-tight">{diffDays} Days</span>
+                                  <span className={`text-[12px] font-bold tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{diffDays} Days</span>
                                 </div>
                               </td>
                               <td className="px-5 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => handleEditLeave(leave)} className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 transition-all">
+                                  <button onClick={() => handleEditLeave(leave)} className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                    isDarkMode ? 'bg-indigo-950 text-indigo-400 hover:bg-indigo-900' : 'bg-indigo-50 text-indigo-400 hover:bg-indigo-100'
+                                  }`}>
                                     <Edit2 size={12} />
                                   </button>
-                                  <button onClick={() => confirmDelete(leave.id, 'leave-application')} className="w-7 h-7 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all">
+                                  <button onClick={() => confirmDelete(leave.id, 'leave-application')} className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                    isDarkMode ? 'bg-rose-950 text-rose-400 hover:bg-rose-900' : 'bg-rose-50 text-rose-400 hover:bg-rose-100'
+                                  }`}>
                                     <Trash2 size={12} />
                                   </button>
                                 </div>
@@ -2258,11 +2443,13 @@ export default function App() {
               </section>
 
               {/* Pending Section */}
-              <section className="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[300px]">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <section className={`rounded-[1.5rem] shadow-sm border overflow-hidden flex flex-col min-h-[300px] ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#A35200]">PENDING/REJECTED ({leaveFilterYear})</h2>
+                    <h2 className={`text-[11px] font-bold uppercase tracking-[0.1em] ${isDarkMode ? 'text-amber-500' : 'text-[#A35200]'}`}>PENDING/REJECTED ({leaveFilterYear})</h2>
                   </div>
                   <div className="w-5 h-5 rounded-full border border-amber-500/30 flex items-center justify-center">
                     <History size={10} className="text-amber-500" />
@@ -2272,13 +2459,13 @@ export default function App() {
                 <div className="overflow-x-auto flex-1 h-full">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/20 border-b border-slate-50">
+                      <tr className={`border-b ${isDarkMode ? 'bg-slate-800/20 border-slate-800' : 'bg-slate-50/20 border-slate-50'}`}>
                         <th className="px-5 py-3 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">TYPE / APPLIED</th>
                         <th className="px-5 py-3 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 text-center">DURATION</th>
                         <th className="px-5 py-3 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 text-right">ACTIONS</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-50'}`}>
                       {filteredLeavesByYear.filter(l => l.status !== 'Approved').length > 0 ? (
                         filteredLeavesByYear.filter(l => l.status !== 'Approved').map((leave) => {
                           const start = new Date(leave.startDate);
@@ -2286,10 +2473,10 @@ export default function App() {
                           const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                           
                           return (
-                            <tr key={leave.id} className="hover:bg-slate-50/50 transition-colors">
+                            <tr key={leave.id} className={`${isDarkMode ? 'hover:bg-slate-800/20' : 'hover:bg-slate-50/50'} transition-colors`}>
                               <td className="px-5 py-3">
                                 <div className="flex flex-col">
-                                  <span className="text-[11px] font-bold uppercase text-slate-800 leading-tight mb-0.5">{leave.type}</span>
+                                  <span className={`text-[11px] font-bold uppercase leading-tight mb-0.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{leave.type}</span>
                                   <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-widest">On: {new Date(leave.appliedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}</span>
                                 </div>
                               </td>
@@ -2298,15 +2485,25 @@ export default function App() {
                                   <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight mb-0.5">
                                     {new Date(leave.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')} — {new Date(leave.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                                   </span>
-                                  <span className="text-[12px] font-bold text-slate-800 tracking-tight">{diffDays} Days</span>
+                                  <span className={`text-[12px] font-bold tracking-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{diffDays} Days</span>
                                 </div>
                               </td>
                               <td className="px-5 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => handleEditLeave(leave)} className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 transition-all">
+                                  <button 
+                                    onClick={() => handleEditLeave(leave)} 
+                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                      isDarkMode ? 'bg-slate-800 text-indigo-400 hover:text-indigo-200 hover:bg-slate-700' : 'bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100'
+                                    }`}
+                                  >
                                     <Edit2 size={12} />
                                   </button>
-                                  <button onClick={() => confirmDelete(leave.id, 'leave-application')} className="w-7 h-7 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-100 transition-all">
+                                  <button 
+                                    onClick={() => confirmDelete(leave.id, 'leave-application')}
+                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                      isDarkMode ? 'bg-slate-800 text-rose-400 hover:text-rose-200 hover:bg-slate-700' : 'bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-rose-100'
+                                    }`}
+                                  >
                                     <Trash2 size={12} />
                                   </button>
                                 </div>
@@ -2334,19 +2531,21 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Bill Form */}
           <aside className="lg:col-span-3 space-y-6">
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Bill Information</h2>
+            <section className={`rounded-2xl shadow-sm border overflow-hidden ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
+              <div className={`p-4 border-b ${isDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                <h2 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Bill Information</h2>
               </div>
               
-              <div className="p-3 bg-slate-50 border-b border-slate-100">
-                <div className="flex p-1 bg-slate-200/50 rounded-xl">
+              <div className={`p-3 border-b ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
+                <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-slate-950' : 'bg-slate-200/50'}`}>
                   <button 
                     onClick={() => setBillFormType('Electric')}
                     className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
                       billFormType === 'Electric' 
                         ? 'bg-amber-500 text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     ELECTRIC
@@ -2356,7 +2555,7 @@ export default function App() {
                     className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
                       billFormType === 'Wifi' 
                         ? 'bg-cyan-600 text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-700'
+                        : isDarkMode ? 'text-slate-500 hover:text-slate-400' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     WIFI
@@ -2375,7 +2574,11 @@ export default function App() {
                         value={billAmount}
                         onChange={(e) => setBillAmount(e.target.value)}
                         placeholder="0.00"
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        className={`w-full border rounded-xl pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/20' 
+                          : 'bg-white border-slate-200 text-slate-900 focus:ring-indigo-500/20'
+                        }`}
                       />
                     </div>
                   </div>
@@ -2386,10 +2589,14 @@ export default function App() {
                       <select 
                         value={billMonth}
                         onChange={(e) => setBillMonth(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        className={`w-full border rounded-xl px-3 py-1.5 text-sm appearance-none focus:outline-none transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200' 
+                          : 'bg-white border-slate-200 text-slate-900'
+                        }`}
                       >
                         {MONTHS.map(m => (
-                          <option key={m} value={m}>{m}</option>
+                          <option key={m} value={m} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{m}</option>
                         ))}
                       </select>
                     </div>
@@ -2400,14 +2607,20 @@ export default function App() {
                         value={billYear}
                         onChange={(e) => setBillYear(e.target.value)}
                         placeholder="Year"
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        className={`w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-200 focus:ring-indigo-500/20' 
+                          : 'bg-white border-slate-200 text-slate-900 focus:ring-indigo-500/20'
+                        }`}
                       />
                     </div>
                   </div>
 
                   <button 
                     onClick={handleApplyBill}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 mt-2"
+                    className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${
+                      isDarkMode ? 'shadow-indigo-950/20' : 'shadow-indigo-100'
+                    }`}
                   >
                     <CheckCircle2 size={18} />
                     {editingBillId ? 'UPDATE BILL' : 'SAVE BILL INFO'}
@@ -2419,10 +2632,14 @@ export default function App() {
                       <select 
                         value={billFilterYear}
                         onChange={(e) => setBillFilterYear(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all cursor-pointer text-center"
+                        className={`w-full border rounded-xl px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 transition-all cursor-pointer text-center ${
+                          isDarkMode 
+                          ? 'bg-slate-800 border-slate-700 text-slate-300 focus:ring-indigo-500/20' 
+                          : 'bg-slate-50 border-slate-200 text-slate-600 focus:ring-indigo-500/20'
+                        }`}
                       >
                         {availableBillYears.map(y => (
-                          <option key={y} value={y}>{y}</option>
+                          <option key={y} value={y} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>{y}</option>
                         ))}
                       </select>
                       <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -2435,7 +2652,9 @@ export default function App() {
                         setEditingBillId(null);
                         setBillAmount('');
                       }}
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2"
+                      className={`w-full font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                        isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
                     >
                       <X size={18} />
                       CANCEL EDIT
@@ -2456,10 +2675,12 @@ export default function App() {
                 const Icon = type === 'Electric' ? Zap : Wifi;
                 
                 return (
-                  <div key={type} className={`bg-white border-2 ${borderColor} rounded-[1.5rem] p-4 shadow-sm transition-all hover:shadow-md`}>
+                  <div key={type} className={`border-2 ${borderColor} rounded-[1.5rem] p-4 shadow-sm transition-all hover:shadow-md ${
+                    isDarkMode ? 'bg-slate-900 shadow-slate-950/20' : 'bg-white'
+                  }`}>
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-[15px] font-bold uppercase tracking-tight text-slate-800 leading-none mb-1">{type === 'Electric' ? 'ELECTRIC BILLS' : 'WIFI BILLS'}</h3>
+                        <h3 className={`text-[15px] font-bold uppercase tracking-tight leading-none mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>{type === 'Electric' ? 'ELECTRIC BILLS' : 'WIFI BILLS'}</h3>
                         <span className="text-[9px] font-semibold uppercase text-slate-400 tracking-[0.1em] leading-none">{billFilterYear} OVERVIEW</span>
                       </div>
                       <div className={`${iconColor}`}>
@@ -2468,13 +2689,17 @@ export default function App() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col">
+                      <div className={`border rounded-2xl p-4 flex flex-col ${
+                        isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'
+                      }`}>
                         <span className="text-[9px] font-bold uppercase text-slate-400 tracking-[0.1em] mb-1.5 leading-none">TOTAL PAID</span>
-                        <span className="text-xl font-bold text-slate-900 leading-none">৳{stats.total.toLocaleString()}</span>
+                        <span className={`text-xl font-bold leading-none ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>৳ {stats.total.toLocaleString()}</span>
                       </div>
-                      <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col">
+                      <div className={`border rounded-2xl p-4 flex flex-col ${
+                        isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'
+                      }`}>
                         <span className="text-[9px] font-bold uppercase text-slate-400 tracking-[0.1em] mb-1.5 leading-none">AVG ({stats.count} MO)</span>
-                        <span className="text-xl font-bold text-slate-600 leading-none">৳{stats.avg.toLocaleString()}</span>
+                        <span className={`text-xl font-bold leading-none ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>৳ {stats.avg.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -2482,14 +2707,20 @@ export default function App() {
               })}
             </div>
 
-            <section className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <section className={`rounded-[2rem] shadow-sm border overflow-hidden ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            }`}>
+              <div className={`p-5 border-b flex items-center justify-between ${
+                isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50/30'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
+                    isDarkMode ? 'bg-indigo-950 text-indigo-400' : 'bg-indigo-50 text-indigo-600'
+                  }`}>
                     <History size={20} />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-slate-900 leading-none mb-1">Payment History</h2>
+                    <h2 className={`text-sm font-bold leading-none mb-1 ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Payment History</h2>
                     <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">{billFilterYear} Transactions</p>
                   </div>
                 </div>
@@ -2498,44 +2729,54 @@ export default function App() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <tr className={`border-b ${isDarkMode ? 'bg-slate-800/10 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Month / Year</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Type</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Amount</th>
                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-50'}`}>
                     {bills.filter(b => b.year === billFilterYear).length > 0 ? (
                       bills.filter(b => b.year === billFilterYear).map((bill) => (
-                        <tr key={bill.id} className="hover:bg-slate-50/50 transition-colors">
+                        <tr key={bill.id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-800/20' : 'hover:bg-slate-50/50'}`}>
                           <td className="px-6 py-4">
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-slate-700">{bill.month}</span>
+                              <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{bill.month}</span>
                               <span className="text-[10px] text-slate-400 font-medium">{bill.year}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
-                              bill.type === 'Electric' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-cyan-50 text-cyan-600 border border-cyan-100'
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight border ${
+                              bill.type === 'Electric' 
+                                ? (isDarkMode ? 'bg-amber-950/30 text-amber-500 border-amber-900' : 'bg-amber-50 text-amber-600 border-amber-100') 
+                                : (isDarkMode ? 'bg-cyan-950/30 text-cyan-400 border-cyan-900' : 'bg-cyan-50 text-cyan-600 border-cyan-100')
                             }`}>
                               {bill.type}
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-sm font-bold text-slate-800">৳{bill.amount.toLocaleString()}</span>
+                            <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>৳ {bill.amount.toLocaleString()}</span>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button 
                                 onClick={() => handleEditBill(bill)}
-                                className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all border border-slate-100 shadow-sm"
+                                className={`w-8 h-8 rounded-full border shadow-sm flex items-center justify-center transition-all ${
+                                  isDarkMode 
+                                  ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-indigo-400 hover:bg-slate-700' 
+                                  : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                                }`}
                               >
                                 <Edit2 size={12} />
                               </button>
                               <button 
                                 onClick={() => confirmDelete(bill.id, 'bill-entry')}
-                                className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all border border-slate-100 shadow-sm"
+                                className={`w-8 h-8 rounded-full border shadow-sm flex items-center justify-center transition-all ${
+                                  isDarkMode 
+                                  ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-slate-700' 
+                                  : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                                }`}
                               >
                                 <Trash2 size={12} />
                               </button>
@@ -2575,21 +2816,29 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
+              className={`relative rounded-[2.5rem] shadow-2xl border w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] ${
+                isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+              <div className={`p-6 border-b flex items-center justify-between ${
+                isDarkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50/30'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
+                    isDarkMode ? 'bg-indigo-950 text-indigo-400' : 'bg-indigo-100 text-indigo-600'
+                  }`}>
                     <History size={20} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 leading-tight">Leave Usage Summary</h3>
+                    <h3 className={`text-xl font-bold leading-tight ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Leave Usage Summary</h3>
                     <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Year-by-year approved breakdown</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowLeaveSummary(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                  }`}
                 >
                   <X size={16} />
                 </button>
@@ -2600,16 +2849,20 @@ export default function App() {
                   leaveSummaryData.map(([year, types]) => (
                     <div key={year} className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">{year} Records</span>
-                        <div className="flex-1 h-px bg-slate-100" />
+                        <span className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                          isDarkMode ? 'text-slate-300 bg-slate-800' : 'text-slate-900 bg-slate-100'
+                        }`}>{year} Records</span>
+                        <div className={`flex-1 h-px ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`} />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {Object.entries(types).map(([type, days]) => {
-                          const colorClass = type === 'Casual Leave' ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 
-                                             type === 'Medical Leave' ? 'text-rose-600 bg-rose-50 border-rose-100' : 
-                                             'text-emerald-600 bg-emerald-50 border-emerald-100';
+                          const colorClass = type === 'Casual Leave' 
+                                             ? (isDarkMode ? 'text-indigo-400 bg-indigo-950/30 border-indigo-900/50' : 'text-indigo-600 bg-indigo-50 border-indigo-100') : 
+                                             type === 'Medical Leave' 
+                                             ? (isDarkMode ? 'text-rose-400 bg-rose-950/30 border-rose-900/50' : 'text-rose-600 bg-rose-50 border-rose-100') : 
+                                             (isDarkMode ? 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50' : 'text-emerald-600 bg-emerald-50 border-emerald-100');
                           return (
-                            <div key={type} className={`p-4 rounded-2xl border ${colorClass} flex flex-col items-center justify-center group transition-all hover:shadow-md`}>
+                            <div key={type} className={`p-4 rounded-2xl border flex flex-col items-center justify-center group transition-all hover:shadow-md ${colorClass}`}>
                               <span className="text-[9px] font-bold uppercase tracking-wider mb-1 opacity-80">{type}</span>
                               <span className="text-xl font-bold leading-none">{days} <span className="text-[10px] uppercase">Days</span></span>
                             </div>
@@ -2620,7 +2873,9 @@ export default function App() {
                   ))
                 ) : (
                   <div className="py-20 text-center space-y-4">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${
+                      isDarkMode ? 'bg-slate-800 text-slate-600 border border-slate-700' : 'bg-slate-50 text-slate-300'
+                    }`}>
                       <History size={32} />
                     </div>
                     <div className="space-y-1">
